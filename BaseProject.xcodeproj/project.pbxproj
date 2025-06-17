@@ -28,9 +28,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		65C3D68B2DFB3AF30016A43E /* psycho2.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = psycho2.app; path = baseProject.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		65C3D69B2DFB3AF40016A43E /* psycho2Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; name = psycho2Tests.xctest; path = baseProjectTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		65C3D6A52DFB3AF40016A43E /* psycho2UITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; name = psycho2UITests.xctest; path = baseProjectUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		65C3D68B2DFB3AF30016A43E /* baseProject.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = baseProject.app; path = baseProject.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		65C3D69B2DFB3AF40016A43E /* baseProjectTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; name = baseProjectTests.xctest; path = baseProjectTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		65C3D6A52DFB3AF40016A43E /* baseProjectUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; name = baseProjectUITests.xctest; path = baseProjectUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		65C3D6B82DFBA0140016A43E /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -91,9 +91,9 @@
 		65C3D68C2DFB3AF30016A43E /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				65C3D68B2DFB3AF30016A43E /* psycho2.app */,
-				65C3D69B2DFB3AF40016A43E /* psycho2Tests.xctest */,
-				65C3D6A52DFB3AF40016A43E /* psycho2UITests.xctest */,
+				65C3D68B2DFB3AF30016A43E /* baseProject.app */,
+				65C3D69B2DFB3AF40016A43E /* baseProjectTests.xctest */,
+				65C3D6A52DFB3AF40016A43E /* baseProjectUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -120,7 +120,7 @@
 			packageProductDependencies = (
 			);
 			productName = baseProject;
-			productReference = 65C3D68B2DFB3AF30016A43E /* psycho2.app */;
+			productReference = 65C3D68B2DFB3AF30016A43E /* baseProject.app */;
 			productType = "com.apple.product-type.application";
 		};
 		65C3D69A2DFB3AF40016A43E /* baseProjectTests */ = {
@@ -143,7 +143,7 @@
 			packageProductDependencies = (
 			);
 			productName = baseProjectTests;
-			productReference = 65C3D69B2DFB3AF40016A43E /* psycho2Tests.xctest */;
+			productReference = 65C3D69B2DFB3AF40016A43E /* baseProjectTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
 		65C3D6A42DFB3AF40016A43E /* baseProjectUITests */ = {
@@ -166,7 +166,7 @@
 			packageProductDependencies = (
 			);
 			productName = baseProjectUITests;
-			productReference = 65C3D6A52DFB3AF40016A43E /* psycho2UITests.xctest */;
+			productReference = 65C3D6A52DFB3AF40016A43E /* baseProjectUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -472,7 +472,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/baseProject.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/psycho2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/baseProject.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/baseProject";
 			};
 			name = Debug;
 		};
@@ -491,7 +491,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/baseProject.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/psycho2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/baseProject.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/baseProject";
 			};
 			name = Release;
 		};
