@@ -1,12 +1,13 @@
 //
 //  NewUserView.swift
-//  psychoheads
+//  BaseProject
 //
 //  Created by Ryan Pavlovicz on 1/12/25.
 //
 
 import SwiftUI
-import FirebaseAuth
+// Uncomment when ready to use Firebase
+// import FirebaseAuth
 
 final class SignUpEmailViewModel: ObservableObject {
     
@@ -28,6 +29,8 @@ final class SignUpEmailViewModel: ObservableObject {
             return
         }
         
+        // Firebase authentication - uncomment when ready to use Firebase
+        /*
         Task {
             do {
                 let returnedUserData = try await AuthenticationManager.shared.createUser(email: email, password: password)
@@ -41,10 +44,25 @@ final class SignUpEmailViewModel: ObservableObject {
                 completion(false)
             }
         }
-    
+        */
+        
+        // Template: Simulate sign up for testing
+        // Simulate network delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            if self.email.contains("@") && self.password.count >= 6 {
+                print("Template: Successfully signed up as \(self.email)")
+                self.errorMessage = nil
+                completion(true)
+            } else {
+                self.errorMessage = "Template: Please use a valid email and password (min 6 characters)"
+                completion(false)
+            }
+        }
     }
     
     private func handleSignUpError(_ error: Error) {
+        // Firebase error handling - uncomment when ready to use Firebase
+        /*
         if let authError = error as NSError? {
             let errorCode = AuthErrorCode.Code(rawValue: authError.code)
             switch errorCode {
@@ -58,6 +76,10 @@ final class SignUpEmailViewModel: ObservableObject {
                 errorMessage = "An unknown error occurred. Please try again."
             }
         }
+        */
+        
+        // Template: Simple error handling
+        errorMessage = "Template: Sign up error occurred."
     }
     
     var isFormValid: Bool {
@@ -76,26 +98,32 @@ struct NewUserView: View {
     @State private var isConfirmPasswordVisible = false // Toggle for confirmation password
     
     var body: some View {
-        VStack {
-            Text("Sign up with email:")
+        VStack(spacing: 20) {
+            // Template notice
+            VStack(spacing: 8) {
+                Text("Template Sign Up")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                
+                Text("Enter any valid email and password (min 6 chars)")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            .padding(.bottom)
             
             TextField("Email", text: $viewModel.email)
-                .padding()
-                .background(Color.gray.opacity(0.3))
-                .cornerRadius(10)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .autocapitalization(.none)
+                .keyboardType(.emailAddress)
             
             // Password Field with Eye Icon
             ZStack(alignment: .trailing) {
                 if isPasswordVisible {
                     TextField("Password", text: $viewModel.password)
-                        .padding()
-                        .background(Color.gray.opacity(0.3))
-                        .cornerRadius(10)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
                 } else {
                     SecureField("Password", text: $viewModel.password)
-                        .padding()
-                        .background(Color.gray.opacity(0.3))
-                        .cornerRadius(10)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
                 }
                 
                 Button(action: {
@@ -103,7 +131,7 @@ struct NewUserView: View {
                 }) {
                     Image(systemName: isPasswordVisible ? "eye" : "eye.slash")
                         .foregroundColor(.gray)
-                        .padding()
+                        .padding(.trailing, 8)
                 }
             }
             
@@ -111,14 +139,10 @@ struct NewUserView: View {
             ZStack(alignment: .trailing) {
                 if isConfirmPasswordVisible {
                     TextField("Confirm Password", text: $viewModel.confirmPassword)
-                        .padding()
-                        .background(Color.gray.opacity(0.3))
-                        .cornerRadius(10)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
                 } else {
                     SecureField("Confirm Password", text: $viewModel.confirmPassword)
-                        .padding()
-                        .background(Color.gray.opacity(0.3))
-                        .cornerRadius(10)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
                 }
                 
                 Button(action: {
@@ -126,7 +150,7 @@ struct NewUserView: View {
                 }) {
                     Image(systemName: isConfirmPasswordVisible ? "eye" : "eye.slash")
                         .foregroundColor(.gray)
-                        .padding()
+                        .padding(.trailing, 8)
                 }
             }
             
@@ -141,7 +165,7 @@ struct NewUserView: View {
                     }
                 }
             } label: {
-                Text("Submit")
+                Text("Sign Up")
                     .font(.headline)
                     .foregroundColor(.white)
                     .frame(height: 55)
@@ -155,10 +179,13 @@ struct NewUserView: View {
                 Text(errorMessage)
                     .foregroundColor(.red)
                     .multilineTextAlignment(.center)
+                    .font(.caption)
             }
             
+            Spacer()
         } // VStack
         .padding()
+        .navigationTitle("Sign Up")
     }
 }
 

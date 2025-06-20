@@ -1,12 +1,13 @@
 //
 //  AccountSettings.swift
-//  psychoheads
+//  BaseProject
 //
 //  Created by Ryan Pavlovicz on 1/12/25.
 //
 
 import SwiftUI
-import FirebaseAuth
+// Uncomment when ready to use Firebase
+// import FirebaseAuth
 
 final class SettingsViewModel: ObservableObject {
     
@@ -20,6 +21,8 @@ final class SettingsViewModel: ObservableObject {
     }
     
     func fetchCurrentUser() {
+        // Firebase authentication - uncomment when ready to use Firebase
+        /*
         if let user = AuthenticationManager.shared.getCurrentUser() {
             DispatchQueue.main.async {
                 self.userName = user.email
@@ -29,10 +32,17 @@ final class SettingsViewModel: ObservableObject {
             self.userName = nil
             print("user is not signed in")
         }
+        */
+        
+        // Template: Simulate user state for testing
+        self.userName = "test@example.com"
+        print("Template: User is signed in as \(self.userName ?? "Unknown")")
     }
 
     
     func signOut() {
+        // Firebase sign out - uncomment when ready to use Firebase
+        /*
         do {
             try AuthenticationManager.shared.signOut()
             DispatchQueue.main.async {
@@ -42,6 +52,13 @@ final class SettingsViewModel: ObservableObject {
         } catch {
             print("Error signing out: \(error.localizedDescription)")
         }
+        */
+        
+        // Template: Simulate sign out for testing
+        DispatchQueue.main.async {
+            self.userName = nil
+        }
+        print("Template: User signed out.")
     }
     
     func updateCacheUsage() {
@@ -89,17 +106,20 @@ struct AccountSettingsView: View {
                 
                 Button("Log Out") {
                     viewModel.signOut()
-                    sourceModel.reloadSources()
+                    // Template: Reset to sample data instead of reloading sources
+                    sourceModel.resetToSampleData()
                 }
                 .foregroundColor(.red)
             } else {
                 NavigationLink("Sign Up", value: SelectionState.newUser)
                     .simultaneousGesture(TapGesture().onEnded {
-                        sourceModel.reloadSources()
+                        // Template: Reset to sample data instead of reloading sources
+                        sourceModel.resetToSampleData()
                     })
                 NavigationLink("Sign In", value: SelectionState.existingUser)
                     .simultaneousGesture(TapGesture().onEnded {
-                        sourceModel.reloadSources()
+                        // Template: Reset to sample data instead of reloading sources
+                        sourceModel.resetToSampleData()
                     })            }
         }
     }

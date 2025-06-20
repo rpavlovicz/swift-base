@@ -1,6 +1,6 @@
 //
 //  MainView.swift
-//  psychoheads
+//  BaseProject
 //
 //  Created by Ryan Pavlovicz on 3/10/23.
 //
@@ -20,84 +20,39 @@ struct MainView: View {
         
                 Spacer()
                 
-                //ClownRow()
-                //    .environmentObject(sourceModel)
-                //    .environmentObject(navigationStateManager)
+                Text("Welcome to BaseProject")
+                    .font(.largeTitle)
+                    .padding()
                 
                 Spacer()
                 
+                // Button Row
                 MainButtonRow()
-                    .frame(maxWidth: /*@START_MENU_TOKEN@*/.infinity/*@END_MENU_TOKEN@*/, maxHeight: 40)
+                    .frame(maxWidth: .infinity, maxHeight: 40)
                     .environmentObject(sourceModel)
                     .environmentObject(navigationStateManager)
  
             }
-            .onAppear() {
-                // ensure reload only happens after logout
-                if sourceModel.sources.isEmpty {
-                    sourceModel.reloadSources()
-                }
-            }
+//            .onAppear() {
+//                // ensure reload only happens after logout
+//                if sourceModel.sources.isEmpty {
+//                    sourceModel.reloadSources()
+//                }
+//            }
             .navigationDestination(for: SelectionState.self) { state in
                 switch state {
-//                    case .imageCapture:
-//                        ImageCaptureView()
-//                            .environmentObject(sourceModel)
-//                            .environmentObject(navigationStateManager)
-//                    case .library:
-//                        LibraryView(sourceModel: sourceModel)
-//                            .environmentObject(navigationStateManager)
-//                    case .edit(let source):
-//                        EditSourceView(source: source)
-//                            .environmentObject(sourceModel)
-//                            .environmentObject(navigationStateManager)
-//                    case .sourceView(let source):
-//                        LibrarySourceView(source: source)
-//                        //.environmentObject(sourceModel)
-//                    case .clippingView(let clipping):
-//                        ClippingView(clipping: clipping)
-//                            .environmentObject(sourceModel)
-//                            .environmentObject(navigationStateManager)
-//                   case .clippingsSwipeView(let clippings, let currentIndex):
-//                        ClippingsSwipeView(clippings: clippings, currentIndex: currentIndex)
-//                            .environmentObject(sourceModel)
-//                            .environmentObject(navigationStateManager)
-//                    case .searchClippings(let clippings):
-//                        SearchClippingView(clippings: clippings)
-//                            .environmentObject(sourceModel)
-//                            .environmentObject(navigationStateManager)
-//                    case .editClippingView(let clipping):
-//                        EditClippingView(clipping: clipping)
-//                            .environmentObject(sourceModel)
-//                            .environmentObject(navigationStateManager)
-//                    case .editClippingSourceView(let clipping):
-//                        EditClippingSourceView(clipping: clipping)
-//                            .environmentObject(sourceModel)
-//                            .environmentObject(navigationStateManager)
-//                    case .collageView:
-//                        CollageView()
-//                            .environmentObject(sourceModel)
-//                            .environmentObject(navigationStateManager)
-//                    case .reportView:
-//                        ReportView()
-//                            .environmentObject(sourceModel)
-//                            .environmentObject(navigationStateManager)
-//                    case .reportSourceDetailView:
-//                        ReportSourceDetailView()
-//                            .environmentObject(sourceModel)
-//                            .environmentObject(navigationStateManager)
-//                    case .reportClippingDetailView:
-//                        ReportClippingDetailView()
-//                            .environmentObject(sourceModel)
-//                            .environmentObject(navigationStateManager)
-//                    case .progressReportView:
-//                        ProgressReportView()
-//                            .environmentObject(sourceModel)
-//                            .environmentObject(navigationStateManager)
-//                    case .psychoView:
-//                        PsychoView()
-//                            .environmentObject(sourceModel)
-//                            .environmentObject(navigationStateManager)
+                    case .viewOne:
+                        ViewOne()
+                            .environmentObject(sourceModel)
+                            .environmentObject(navigationStateManager)
+                    case .viewTwo:
+                        ViewTwo()
+                            .environmentObject(sourceModel)
+                            .environmentObject(navigationStateManager)
+                    case .viewThree:
+                        ViewThree()
+                            .environmentObject(sourceModel)
+                            .environmentObject(navigationStateManager)
                     case .accountSettings:
                         AccountSettingsView()
                             .environmentObject(sourceModel)
@@ -117,8 +72,8 @@ struct MainView: View {
     }
 }
 
-//struct MainView_Previews: PreviewProvider {
-//    static var previews: some View {
-//        MainView()
-//    }
-//}
+struct MainView_Previews: PreviewProvider {
+    static var previews: some View {
+        MainView()
+    }
+}

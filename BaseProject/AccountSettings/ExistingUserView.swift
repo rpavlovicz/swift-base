@@ -1,12 +1,13 @@
 //
 //  ExistingUserView.swift
-//  psychoheads
+//  BaseProject
 //
 //  Created by Ryan Pavlovicz on 2/2/25.
 //
 
 import SwiftUI
-import FirebaseAuth
+// Uncomment when ready to use Firebase
+// import FirebaseAuth
 
 final class SignInEmailViewModel: ObservableObject {
     
@@ -21,6 +22,8 @@ final class SignInEmailViewModel: ObservableObject {
             return
         }
         
+        // Firebase authentication - uncomment when ready to use Firebase
+        /*
         Task {
             do {
                 let returnedUserData = try await AuthenticationManager.shared.signInUser(email: email, password: password)
@@ -34,10 +37,25 @@ final class SignInEmailViewModel: ObservableObject {
                 completion(false)
             }
         }
-    
+        */
+        
+        // Template: Simulate authentication for testing
+        // Simulate network delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            if self.email == "test@example.com" && self.password == "password" {
+                print("Template: Successfully signed in as \(self.email)")
+                self.errorMessage = nil
+                completion(true)
+            } else {
+                self.errorMessage = "Template: Invalid credentials. Use test@example.com / password"
+                completion(false)
+            }
+        }
     }
     
     private func handleSignInError(_ error: Error) {
+        // Firebase error handling - uncomment when ready to use Firebase
+        /*
         if let authError = error as NSError? {
             let errorCode = AuthErrorCode.Code(rawValue: authError.code)
             switch errorCode {
@@ -57,6 +75,10 @@ final class SignInEmailViewModel: ObservableObject {
                 errorMessage = "An unknown error occurred. Please try again."
             }
         }
+        */
+        
+        // Template: Simple error handling
+        errorMessage = "Template: Authentication error occurred."
     }
     
     var isFormValid: Bool {
@@ -73,24 +95,31 @@ struct ExistingUserView: View {
     @State private var isPasswordVisible = false // Toggle for main password
     
     var body: some View {
-        VStack {
-            Text("Sign in with email:")
+        VStack(spacing: 20) {
+            // Template notice
+            VStack(spacing: 8) {
+                Text("Template Sign In")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                
+                Text("Use test@example.com / password")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            .padding(.bottom)
+            
             TextField("Email", text: $viewModel.email)
-                .padding()
-                .background(Color.gray.opacity(0.3))
-                .cornerRadius(10)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .autocapitalization(.none)
+                .keyboardType(.emailAddress)
             
             ZStack(alignment: .trailing) {
                 if isPasswordVisible {
                     TextField("Password", text: $viewModel.password)
-                        .padding()
-                        .background(Color.gray.opacity(0.3))
-                        .cornerRadius(10)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
                 } else {
                     SecureField("Password", text: $viewModel.password)
-                        .padding()
-                        .background(Color.gray.opacity(0.3))
-                        .cornerRadius(10)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
                 }
                 
                 Button(action: {
@@ -98,7 +127,7 @@ struct ExistingUserView: View {
                 }) {
                     Image(systemName: isPasswordVisible ? "eye" : "eye.slash")
                         .foregroundColor(.gray)
-                        .padding()
+                        .padding(.trailing, 8)
                 }
             }
             
@@ -113,7 +142,7 @@ struct ExistingUserView: View {
                     }
                 }
             } label: {
-                Text("Submit")
+                Text("Sign In")
                     .font(.headline)
                     .foregroundColor(.white)
                     .frame(height: 55)
@@ -127,12 +156,14 @@ struct ExistingUserView: View {
                 Text(errorMessage)
                     .foregroundColor(.red)
                     .multilineTextAlignment(.center)
+                    .font(.caption)
             }
             
+            Spacer()
         } // VStack
         .padding()
+        .navigationTitle("Sign In")
     }
-    
 }
 
 //#Preview {

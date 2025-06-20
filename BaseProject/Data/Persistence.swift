@@ -1,6 +1,7 @@
 //
 //  Persistence.swift
-//  psychoheads
+//  used as a Core Data manager
+//  handles local data persistence
 //
 //  Created by Ryan Pavlovicz on 6/18/23.
 //
@@ -13,7 +14,7 @@ struct PersistenceController {
     let container: NSPersistentContainer
 
     init(inMemory: Bool = false) {
-        container = NSPersistentContainer(name: "psychoheads")
+        container = NSPersistentContainer(name: "baseProject")
         if inMemory {
             container.persistentStoreDescriptions.first!.url = URL(fileURLWithPath: "/dev/null")
         }

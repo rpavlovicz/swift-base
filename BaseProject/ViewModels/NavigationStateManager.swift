@@ -10,22 +10,29 @@ import Foundation
 import Combine
 
 enum SelectionState: Hashable, Codable {
-    case edit(Source)
-    case library
-    case imageCapture
-    case sourceView(Source)
-    case clippingView(Clipping)
-    case clippingsSwipeView([Clipping], currentIndex: Int)
-    case searchClippings([Clipping]?)
-    //case searchClippings
-    case editClippingView(Clipping)
-    case editClippingSourceView(Clipping)
-    case collageView
-    case reportView
-    case reportSourceDetailView
-    case reportClippingDetailView
-    case progressReportView
-    case psychoView
+//    case edit(Source)
+//    case library
+//    case imageCapture
+//    case sourceView(Source)
+//    case clippingView(Clipping)
+//    case clippingsSwipeView([Clipping], currentIndex: Int)
+//    case searchClippings([Clipping]?)
+//    //case searchClippings
+//    case editClippingView(Clipping)
+//    case editClippingSourceView(Clipping)
+//    case collageView
+//    case reportView
+//    case reportSourceDetailView
+//    case reportClippingDetailView
+//    case progressReportView
+//    case psychoView
+    
+    // Template navigation states
+    case viewOne
+    case viewTwo
+    case viewThree
+    
+    // Account settings
     case accountSettings
     case newUser
     case existingUser
@@ -35,13 +42,13 @@ class NavigationStateManager: ObservableObject {
     
     @Published var selectionPath = [SelectionState]()
     
-    func goToLibrary() {
-        selectionPath = [SelectionState.library]
-    }
+//    func goToLibrary() {
+//        selectionPath = [SelectionState.library]
+//    }
     
-    func goToPsycho() {
-        selectionPath = [SelectionState.psychoView]
-    }
+//    func goToPsycho() {
+//        selectionPath = [SelectionState.psychoView]
+//    }
     
     var data: Data? {
         get {
