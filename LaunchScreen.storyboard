@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="23504" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
-    <device id="iPad13_0rounded" orientation="portrait" layout="fullscreen" appearance="light"/>
+    <device id="retina6_9" orientation="portrait" appearance="light"/>
     <dependencies>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="23506"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
@@ -11,41 +11,33 @@
         <scene sceneID="EHf-IW-A2E">
             <objects>
                 <viewController id="01J-lp-oVM" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="Ze5-6b-2t3">
-                        <rect key="frame" x="0.0" y="0.0" width="1032" height="1376"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                    <view key="view" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Ze5-6b-2t3">
+                        <rect key="frame" x="0.0" y="0.0" width="440" height="956"/>
                         <subviews>
-                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" image="shapes_group" translatesAutoresizingMaskIntoConstraints="NO" id="t5t-zc-JJL">
-                                <rect key="frame" x="0.0" y="174" width="1032" height="1032"/>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" image="falling_heads_small" translatesAutoresizingMaskIntoConstraints="NO" id="zTm-3F-xjz">
+                                <rect key="frame" x="-338" y="0.0" width="1116" height="1494.3333333333333"/>
                                 <constraints>
-                                    <constraint firstAttribute="width" secondItem="t5t-zc-JJL" secondAttribute="height" multiplier="1:1" id="vlG-gi-Ya9"/>
+                                    <constraint firstAttribute="width" secondItem="zTm-3F-xjz" secondAttribute="height" multiplier="1233:1651" id="1oe-8E-WfA"/>
                                 </constraints>
                             </imageView>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="BaseProject" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="HK3-fP-EQ5">
-                                <rect key="frame" x="369.5" y="129" width="293" height="70"/>
-                                <fontDescription key="fontDescription" type="system" pointSize="58"/>
-                                <nil key="textColor"/>
-                                <nil key="highlightedColor"/>
-                            </label>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="Bcu-3y-fUS"/>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
-                            <constraint firstItem="t5t-zc-JJL" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="2sO-qL-QEY"/>
-                            <constraint firstItem="t5t-zc-JJL" firstAttribute="width" secondItem="Ze5-6b-2t3" secondAttribute="width" id="A1c-EZ-vdQ"/>
-                            <constraint firstItem="t5t-zc-JJL" firstAttribute="centerY" secondItem="Bcu-3y-fUS" secondAttribute="centerY" id="VXW-Ki-3Ug"/>
-                            <constraint firstItem="t5t-zc-JJL" firstAttribute="centerX" secondItem="Bcu-3y-fUS" secondAttribute="centerX" id="ioD-d7-Aoj"/>
-                            <constraint firstItem="HK3-fP-EQ5" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="lFy-R8-ZUo"/>
-                            <constraint firstItem="HK3-fP-EQ5" firstAttribute="centerY" secondItem="t5t-zc-JJL" secondAttribute="top" constant="-10" id="odq-4X-tn7"/>
+                            <constraint firstItem="zTm-3F-xjz" firstAttribute="width" secondItem="Ze5-6b-2t3" secondAttribute="width" multiplier="1.4" id="eJM-U7-l9N">
+                                <variation key="heightClass=regular-widthClass=compact" constant="500"/>
+                            </constraint>
+                            <constraint firstItem="zTm-3F-xjz" firstAttribute="top" secondItem="Ze5-6b-2t3" secondAttribute="top" id="gxW-eh-lBo"/>
+                            <constraint firstItem="zTm-3F-xjz" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="jdq-8h-FeG"/>
                         </constraints>
                     </view>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="iYj-Kq-Ea1" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="122.67441860465117" y="364.97093023255815"/>
+            <point key="canvasLocation" x="120.93023255813954" y="364.53488372093022"/>
         </scene>
     </scenes>
     <resources>
-        <image name="shapes_group" width="980" height="980"/>
+        <image name="falling_heads_small" width="1233" height="1651"/>
     </resources>
 </document>
