@@ -10,25 +10,8 @@ import Foundation
 import Combine
 
 enum SelectionState: Hashable, Codable {
-//    case edit(Source)
-//    case library
-//    case imageCapture
-//    case sourceView(Source)
-//    case clippingView(Clipping)
-//    case clippingsSwipeView([Clipping], currentIndex: Int)
-//    case searchClippings([Clipping]?)
-//    //case searchClippings
-//    case editClippingView(Clipping)
-//    case editClippingSourceView(Clipping)
-//    case collageView
-//    case reportView
-//    case reportSourceDetailView
-//    case reportClippingDetailView
-//    case progressReportView
+
 //    case psychoView
-    
-    // Template navigation states
-    case viewThree
     
     // Account settings
     case accountSettings

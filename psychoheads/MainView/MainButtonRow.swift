@@ -97,7 +97,7 @@ struct MainButtonRow: View {
                     Text("Reports")
                         .font(.caption2)
                 }
-                .padding(8)
+                //.padding(8)
             })
             
             Spacer()
@@ -128,7 +128,7 @@ struct MainButtonRow: View {
                     Text("Help")
                         .font(.caption2)
                 }
-                .padding(8)
+                //.padding(8)
             }
             
             Spacer()
@@ -218,7 +218,7 @@ struct MainButtonRow: View {
                     Text("Reports")
                         .font(.caption2)
                 }
-                .padding(8)
+                //.padding(8)
             })
             
             Spacer()
@@ -249,7 +249,7 @@ struct MainButtonRow: View {
                     Text("Help")
                         .font(.caption2)
                 }
-                .padding(8)
+                //.padding(8)
             }
             
             Spacer()

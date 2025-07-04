@@ -47,11 +47,6 @@ struct MainView: View {
                             .environmentObject(sourceModel)
                             .environmentObject(navigationStateManager)
                             .environment(\.managedObjectContext, viewContext)
-                    case .viewThree:
-                        ViewThree()
-                            .environmentObject(sourceModel)
-                            .environmentObject(navigationStateManager)
-                            .environment(\.managedObjectContext, viewContext)
                     case .accountSettings:
                         AccountSettingsView()
                             .environmentObject(sourceModel)
@@ -62,6 +57,7 @@ struct MainView: View {
                             .environmentObject(navigationStateManager)
                     case .existingUser:
                         ExistingUserView()
+                            .environmentObject(sourceModel)
                             .environmentObject(navigationStateManager)
                     case .library:
                         LibraryView(sourceModel: sourceModel)

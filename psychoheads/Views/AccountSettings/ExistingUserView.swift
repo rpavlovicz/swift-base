@@ -6,8 +6,7 @@
 //
 
 import SwiftUI
-// Uncomment when ready to use Firebase
-// import FirebaseAuth
+import FirebaseAuth
 
 final class SignInEmailViewModel: ObservableObject {
     
@@ -17,19 +16,21 @@ final class SignInEmailViewModel: ObservableObject {
     
     func signIn(completion: @escaping (Bool) -> Void) {
         guard !email.isEmpty, !password.isEmpty else {
-            errorMessage = "Please enter both email and password."
+            DispatchQueue.main.async {
+                self.errorMessage = "Please enter both email and password."
+            }
             completion(false)
             return
         }
         
-        // Firebase authentication - uncomment when ready to use Firebase
-        /*
         Task {
             do {
                 let returnedUserData = try await AuthenticationManager.shared.signInUser(email: email, password: password)
-                print("Successfully signed in")
-                print(returnedUserData)
-                errorMessage = nil
+                DispatchQueue.main.async {
+                    print("Successfully signed in")
+                    print(returnedUserData)
+                    self.errorMessage = nil
+                }
                 completion(true)
                 
             } catch {
@@ -37,48 +38,31 @@ final class SignInEmailViewModel: ObservableObject {
                 completion(false)
             }
         }
-        */
         
-        // Template: Simulate authentication for testing
-        // Simulate network delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            if self.email == "test@example.com" && self.password == "password" {
-                print("Template: Successfully signed in as \(self.email)")
-                self.errorMessage = nil
-                completion(true)
-            } else {
-                self.errorMessage = "Template: Invalid credentials. Use test@example.com / password"
-                completion(false)
-            }
-        }
     }
     
     private func handleSignInError(_ error: Error) {
-        // Firebase error handling - uncomment when ready to use Firebase
-        /*
         if let authError = error as NSError? {
-            let errorCode = AuthErrorCode.Code(rawValue: authError.code)
-            switch errorCode {
-            case .invalidEmail:
-                errorMessage = "Email address in invalid. Please enter a valid email address."
-            case .wrongPassword:
-                errorMessage = "Incorrect password. Please try again."
-            case .userNotFound:
-                errorMessage = "No account found with this email. Please sign up first."
-            case .tooManyRequests:
-                errorMessage = "Too many login attempts. Try again later."
-            case .networkError:
-                errorMessage = "Network error. Please check your connection and try again."
-            case .operationNotAllowed:
-                errorMessage = "Sign-in is currently not enabled. Contact suppport."
-            default:
-                errorMessage = "An unknown error occurred. Please try again."
+            let errorCode = AuthErrorCode(rawValue: authError.code)
+            DispatchQueue.main.async {
+                switch errorCode {
+                case .invalidEmail:
+                    self.errorMessage = "Email address in invalid. Please enter a valid email address."
+                case .wrongPassword:
+                    self.errorMessage = "Incorrect password. Please try again."
+                case .userNotFound:
+                    self.errorMessage = "No account found with this email. Please sign up first."
+                case .tooManyRequests:
+                    self.errorMessage = "Too many login attempts. Try again later."
+                case .networkError:
+                    self.errorMessage = "Network error. Please check your connection and try again."
+                case .operationNotAllowed:
+                    self.errorMessage = "Sign-in is currently not enabled. Contact suppport."
+                default:
+                    self.errorMessage = "An unknown error occurred. Please try again."
+                }
             }
         }
-        */
-        
-        // Template: Simple error handling
-        errorMessage = "Template: Authentication error occurred."
     }
     
     var isFormValid: Bool {
@@ -92,6 +76,7 @@ struct ExistingUserView: View {
 
     @StateObject private var viewModel = SignInEmailViewModel()
     @EnvironmentObject var navigationStateManager: NavigationStateManager
+    @EnvironmentObject var sourceModel: SourceModel
     @State private var isPasswordVisible = false // Toggle for main password
     
     var body: some View {
@@ -135,6 +120,7 @@ struct ExistingUserView: View {
                 viewModel.signIn { success in
                     if success {
                         DispatchQueue.main.async {
+                            sourceModel.reloadSources() // Load user's data after successful login
                             navigationStateManager.popBack() // Ensure navigation update is on the main thread
                         }
                     } else {
