@@ -24,6 +24,7 @@ struct CollageView: View {
     @State private var positions: [CGPoint] = []
     @State private var dragOffsets: [CGSize] = []
     @State private var invertZOrder = false
+    @State private var geometrySize: CGSize = .zero
     
     struct CollageButton: Identifiable {
         let id = UUID()
@@ -39,11 +40,7 @@ struct CollageView: View {
                 label: Constants.clown,
                 systemImage: nil,
                 action: {
-                    let randomClippings = Array(sourceModel.headClippings.shuffled().prefix(2))
-                    clippings = randomClippings
-                    positions = randomClippings.map { _ in CGPoint(x: UIScreen.main.bounds.width/2, y: displayHeight/2) }
-                    dragOffsets = randomClippings.map { _ in .zero }
-                    invertZOrder = false
+                    loadRandomClippings()
                 },
                 isEnabled: true
             ),
@@ -64,54 +61,115 @@ struct CollageView: View {
     }
     
     private var displayHeight: CGFloat {
-        UIScreen.main.bounds.height - 120 // Increased space for two buttons
+        UIScreen.main.bounds.height - 40 // Space for button row
     }
     
-    // Calculate maximum allowed image dimensions (90% of display space)
-    private var maxImageWidth: CGFloat {
-        displayWidth * 0.9
+    // Calculate the center point for clippings (center of available space above button row)
+    private var clippingCenterY: CGFloat {
+        (UIScreen.main.bounds.height - 40) / 2
     }
     
-    private var maxImageHeight: CGFloat {
-        displayHeight * 0.9
-    }
-    
-    // Convert centimeters to points (1 cm ≈ 61.07 points based on real-world measurement)
-    private func cmToPoints(_ cm: Double) -> CGFloat {
-        return CGFloat(cm * 61.07)
-    }
-    
-    // Calculate the maximum dimensions across all clippings
-    private func calculateMaxDimensions() -> (width: CGFloat, height: CGFloat) {
-        var maxWidth: CGFloat = 0
-        var maxHeight: CGFloat = 0
+    // Load random clippings and position them
+    private func loadRandomClippings() {
+        let randomClippings = Array(sourceModel.headClippings.shuffled().prefix(2))
+        clippings = randomClippings
         
-        for clipping in clippings {
-            let width = cmToPoints(clipping.width)
-            let height = cmToPoints(clipping.height)
-            maxWidth = max(maxWidth, width)
-            maxHeight = max(maxHeight, height)
+        // Calculate sizes to determine which is larger
+        let clippingSizes = randomClippings.map { calculateImageSize(for: $0) }
+        let areas = clippingSizes.map { $0.width * $0.height }
+        
+        // Find the larger and smaller clipping indices
+        let largerIndex = areas[0] > areas[1] ? 0 : 1
+        let smallerIndex = largerIndex == 0 ? 1 : 0
+        
+        // Check if clippings are within 85% size match
+        let largerArea = areas[largerIndex]
+        let smallerArea = areas[smallerIndex]
+        let sizeRatio = smallerArea / largerArea
+        let isSimilarSize = sizeRatio >= 0.85
+        
+        // Use actual geometry dimensions for accurate positioning
+        let centerX = geometrySize.width / 2
+        let centerY = geometrySize.height / 2
+        
+        // Position larger clipping in center
+        var newPositions = Array(repeating: CGPoint.zero, count: randomClippings.count)
+        newPositions[largerIndex] = CGPoint(x: centerX, y: centerY)
+        
+        // Position smaller clipping offset based on larger clipping's dimensions and looking direction
+        let largerClippingSize = clippingSizes[largerIndex]
+        let largerClipping = randomClippings[largerIndex]
+        
+        // Determine horizontal offset based on looking direction
+        let horizontalMultiplier: CGFloat
+        if let lookingDirection = largerClipping.lookingDirection {
+            switch lookingDirection {
+            case "upperRight", "right", "lowerRight":
+                horizontalMultiplier = -0.3 // Shift left
+            case "up", "fullFace", "down":
+                // For up/down/fullFace, check the smaller clipping's direction
+                let smallerClipping = randomClippings[smallerIndex]
+                if let smallerLookingDirection = smallerClipping.lookingDirection {
+                    switch smallerLookingDirection {
+                    case "upperLeft", "left", "lowerLeft":
+                        horizontalMultiplier = -0.3 // Shift left for left-facing smaller clipping
+                    default:
+                        horizontalMultiplier = 0.3 // Shift right for all other cases
+                    }
+                } else {
+                    horizontalMultiplier = 0.3 // Default to right if smaller clipping has no direction
+                }
+            default:
+                horizontalMultiplier = 0.3 // Shift right
+            }
+        } else {
+            horizontalMultiplier = 0.3 // Default to right if no looking direction
         }
         
-        return (maxWidth, maxHeight)
-    }
-    
-    // Calculate scaling factor based on maximum dimensions
-    private func calculateScalingFactor() -> CGFloat {
-        let maxDims = calculateMaxDimensions()
-        let widthScale = maxDims.width > maxImageWidth ? maxImageWidth / maxDims.width : 1.0
-        let heightScale = maxDims.height > maxImageHeight ? maxImageHeight / maxDims.height : 1.0
+        // Apply size-based multiplier adjustment
+        let finalHorizontalMultiplier = isSimilarSize ? horizontalMultiplier * (0.5 / 0.3) : horizontalMultiplier
+        let finalVerticalMultiplier: CGFloat = isSimilarSize ? 0.5 : 0.3
         
-        return min(widthScale, heightScale)
+        let offsetX = centerX + (largerClippingSize.width * finalHorizontalMultiplier)
+        let offsetY = centerY + (largerClippingSize.height * finalVerticalMultiplier)
+        newPositions[smallerIndex] = CGPoint(x: offsetX, y: offsetY)
+        
+        positions = newPositions
+        dragOffsets = randomClippings.map { _ in .zero }
+        invertZOrder = false
     }
     
-    // Calculate scaled image dimensions while maintaining aspect ratio
+    // Calculate proper image size based on clipping dimensions and available space (match ClippingsSwipeView)
     private func calculateImageSize(for clipping: Clipping) -> CGSize {
-        let originalWidth = cmToPoints(clipping.width)
-        let originalHeight = cmToPoints(clipping.height)
-        let scale = calculateScalingFactor()
-        
-        return CGSize(width: originalWidth * scale, height: originalHeight * scale)
+        let maxWidthFraction: CGFloat = 0.65
+        let maxHeightFraction: CGFloat = 0.6
+        let screenWidth = UIScreen.main.bounds.width * maxWidthFraction
+        let screenHeight = UIScreen.main.bounds.height * maxHeightFraction
+        let cmToPoints: CGFloat = UIDevice.current.userInterfaceIdiom == .pad ? 52.85 : 60.8
+        let clippingWidthPoints = CGFloat(clipping.width) * cmToPoints
+        let clippingHeightPoints = CGFloat(clipping.height) * cmToPoints
+        let widthScale = screenWidth / clippingWidthPoints
+        let heightScale = screenHeight / clippingHeightPoints
+        let scale = min(widthScale, heightScale, 1.0)
+        return CGSize(
+            width: clippingWidthPoints * scale,
+            height: clippingHeightPoints * scale
+        )
+    }
+    
+    // Calculate the scale indicator text (match ClippingsSwipeView)
+    private func scaleIndicatorText(for clipping: Clipping, imageSize: CGSize) -> String {
+        let cmToPoints: CGFloat = UIDevice.current.userInterfaceIdiom == .pad ? 52.85 : 60.8
+        let originalWidthPoints = CGFloat(clipping.width) * cmToPoints
+        let originalHeightPoints = CGFloat(clipping.height) * cmToPoints
+        let widthScale = imageSize.width / originalWidthPoints
+        let heightScale = imageSize.height / originalHeightPoints
+        let scale = min(widthScale, heightScale, 1.0)
+        if scale >= 0.99 {
+            return "1x"
+        } else {
+            return String(format: "%.2fx", scale)
+        }
     }
     
     // Calculate area of a clipping
@@ -130,52 +188,94 @@ struct CollageView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            ZStack {
-                if !clippings.isEmpty {
-                    ForEach(Array(clippings.enumerated()), id: \.element.id) { index, clipping in
-                        AsyncImage2(clipping: clipping,
-                                    placeholder: UIImage(),
-                                    imageUrlMid: clipping.imageUrlMid,
-                                    frameHeight: calculateImageSize(for: clipping).height)
-                            .frame(width: calculateImageSize(for: clipping).width,
-                                   height: calculateImageSize(for: clipping).height)
-                            .position(x: positions[index].x + dragOffsets[index].width,
-                                     y: positions[index].y + dragOffsets[index].height)
-                            .zIndex(Double(sortedIndices().firstIndex(of: index) ?? 0))
-                            .gesture(
-                                DragGesture()
-                                    .onChanged { gesture in
-                                        dragOffsets[index] = gesture.translation
-                                    }
-                                    .onEnded { gesture in
-                                        positions[index].x += dragOffsets[index].width
-                                        positions[index].y += dragOffsets[index].height
-                                        dragOffsets[index] = .zero
-                                    }
-                            )
+            GeometryReader { geometry in
+                ZStack(alignment: .bottomTrailing) {
+                    // Center guide lines
+                    VStack {
+                        // Vertical center line
+                        Rectangle()
+                            .fill(Color.red.opacity(0.5))
+                            .frame(width: 1)
+                            .frame(maxHeight: .infinity)
                     }
-                } else {
-                    Text("No clippings loaded")
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    
+                    HStack {
+                        // Horizontal center line
+                        Rectangle()
+                            .fill(Color.blue.opacity(0.5))
+                            .frame(height: 1)
+                            .frame(maxWidth: .infinity)
+                    }
+                    .frame(maxHeight: .infinity, alignment: .center)
+                    
+                    if !clippings.isEmpty {
+                        ForEach(Array(clippings.enumerated()), id: \.element.id) { index, clipping in
+                            let imageSize = calculateImageSize(for: clipping)
+                            AsyncImage2(clipping: clipping,
+                                        placeholder: UIImage(),
+                                        imageUrlMid: clipping.imageUrlMid,
+                                        frameHeight: imageSize.height)
+                                .frame(width: imageSize.width,
+                                       height: imageSize.height)
+                                .position(x: positions[index].x + dragOffsets[index].width,
+                                         y: positions[index].y + dragOffsets[index].height)
+                                .zIndex(Double(sortedIndices().firstIndex(of: index) ?? 0))
+                                .gesture(
+                                    DragGesture()
+                                        .onChanged { gesture in
+                                            dragOffsets[index] = gesture.translation
+                                        }
+                                        .onEnded { gesture in
+                                            positions[index].x += dragOffsets[index].width
+                                            positions[index].y += dragOffsets[index].height
+                                            dragOffsets[index] = .zero
+                                        }
+                                )
+                        }
+                    } else {
+                        Text("No clippings loaded")
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }
+                    
+                    // Scaling indicator overlay (positioned like in ClippingsSwipeView)
+                    if !clippings.isEmpty {
+                        let largestClipping = clippings.max(by: { calculateImageSize(for: $0).width * calculateImageSize(for: $0).height < calculateImageSize(for: $1).width * calculateImageSize(for: $1).height })!
+                        let imageSize = calculateImageSize(for: largestClipping)
+                        HStack(spacing: 4) {
+                            Image(systemName: "square.resize.down")
+                                .font(.caption)
+                            Text(scaleIndicatorText(for: largestClipping, imageSize: imageSize))
+                                .font(.caption)
+                                .fontWeight(.medium)
+                        }
+                        .padding(6)
+                        .background(
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(Color(.systemBackground).opacity(0.9))
+                                .shadow(color: .black.opacity(0.2), radius: 2, x: 0, y: 1)
+                        )
+                        .padding(.trailing, 10)
+                        .padding(.bottom, 27)
+                    }
+                }
+                .frame(width: geometry.size.width, height: geometry.size.height)
+                .onAppear {
+                    geometrySize = geometry.size
+                }
+                .onChange(of: geometry.size) { newSize in
+                    geometrySize = newSize
                 }
             }
             CollageButtonRow(
-                onLoad: {
-                    let randomClippings = Array(sourceModel.headClippings.shuffled().prefix(2))
-                    clippings = randomClippings
-                    positions = randomClippings.map { _ in CGPoint(x: UIScreen.main.bounds.width/2, y: displayHeight/2) }
-                    dragOffsets = randomClippings.map { _ in .zero }
-                    invertZOrder = false
-                },
+                onLoad: loadRandomClippings,
                 onInvert: {
                     withAnimation { invertZOrder.toggle() }
                 },
                 invertEnabled: !clippings.isEmpty
             )
-            .frame(maxWidth: .infinity, maxHeight: 40)
-
+            .frame(maxHeight: 40)
         }
-        //.edgesIgnoringSafeArea(.bottom)
     }
 }
 
