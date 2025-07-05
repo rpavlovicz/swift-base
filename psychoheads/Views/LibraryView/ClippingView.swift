@@ -330,10 +330,17 @@ class MockHeadClipping: Clipping {
     }
 }
 
-//struct ClippingView_Previews: PreviewProvider {
-//    static var previews: some View {
-//        ClippingView(clipping: MockClipping())
-//            .environmentObject(SourceModel())
-//            .environmentObject(NavigationStateManager())
-//    }
-//}
+struct ClippingView_Previews: PreviewProvider {
+    static var previews: some View {
+        Group {
+            ClippingView(clipping: MockClipping())
+                .environmentObject(SourceModel())
+                .environmentObject(NavigationStateManager())
+                .previewDisplayName("Body Clipping")
+            ClippingView(clipping: MockHeadClipping())
+                .environmentObject(SourceModel())
+                .environmentObject(NavigationStateManager())
+                .previewDisplayName("Head Clipping")
+        }
+    }
+}

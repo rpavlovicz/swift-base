@@ -33,6 +33,7 @@ enum SelectionState: Hashable, Codable {
     case reportSourceDetailView
     case reportClippingDetailView
     case progressReportView
+    case tempClippingView
 
 }
 

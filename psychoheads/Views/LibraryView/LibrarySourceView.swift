@@ -22,25 +22,33 @@ struct LibrarySourceView: View {
     @ObservedObject var source: Source
     let placeholderImage: UIImage? = UIImage(named: "clipping_thumb")
     
+    // Add state for sheet presentation
+    @State private var showSwipeSheet: Bool = false
+    @State private var swipeStartIndex: Int = 0
+    
+    @EnvironmentObject var sourceModel: SourceModel
+    @EnvironmentObject var navigationStateManager: NavigationStateManager
+    @Environment(\.managedObjectContext) private var managedObjectContext
+    
+    var sortedClippings: [Clipping] {
+        return source.clippings.sorted { (clipping1, clipping2) -> Bool in
+            switch (clipping1.isHead, clipping1.isBody, clipping2.isHead, clipping2.isBody) {
+            case (true, _, false, _):
+                return true
+            case (false, _, true, _):
+                return false
+            case (true, false, true, true):
+                return true
+            case (true, true, true, false):
+                return false
+            default:
+                return clipping1.size > clipping2.size
+            }
+        }
+    }
+    
     var body: some View {
         VStack {
-            
-            var sortedClippings: [Clipping] {
-                return source.clippings.sorted { (clipping1, clipping2) -> Bool in
-                    switch (clipping1.isHead, clipping1.isBody, clipping2.isHead, clipping2.isBody) {
-                    case (true, _, false, _):
-                        return true
-                    case (false, _, true, _):
-                        return false
-                    case (true, false, true, true):
-                        return true
-                    case (true, true, true, false):
-                        return false
-                    default:
-                        return clipping1.size > clipping2.size
-                    }
-                }
-            }
             
 //            ScrollView {
 //                LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))]) {
@@ -59,7 +67,15 @@ struct LibrarySourceView: View {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))]) {
                     ForEach(sortedClippings.indices, id: \.self) { index in
                         let clipping = sortedClippings[index]
-                        NavigationLink(value: SelectionState.clippingsSwipeView(sortedClippings, currentIndex: index), label: { AsyncImage1(clipping: clipping, placeholder: placeholderImage ?? UIImage())})}
+                        // Replace NavigationLink with Button to trigger sheet
+                        Button(action: {
+                            swipeStartIndex = index
+                            showSwipeSheet = true
+                        }) {
+                            AsyncImage1(clipping: clipping, placeholder: placeholderImage ?? UIImage())
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    }
                 }
                 
             }
@@ -79,16 +95,46 @@ struct LibrarySourceView: View {
                 }
             }
         }
-
+        // Sheet presentation for ClippingsSwipeView
+        .sheet(isPresented: $showSwipeSheet) {
+            NavigationStack {
+                ClippingsSwipeView(clippings: sortedClippings, currentIndex: $swipeStartIndex)
+                    .environmentObject(sourceModel)
+                    .environmentObject(navigationStateManager)
+                    .environment(\.managedObjectContext, managedObjectContext)
+                    .navigationDestination(for: SelectionState.self) { state in
+                        switch state {
+                        case .sourceView(let source):
+                            LibrarySourceView(source: source)
+                                .environmentObject(sourceModel)
+                                .environmentObject(navigationStateManager)
+                                .environment(\.managedObjectContext, managedObjectContext)
+                        case .editClippingView(let clipping):
+                            EditClippingView(clipping: clipping)
+                                .environmentObject(sourceModel)
+                                .environmentObject(navigationStateManager)
+                                .environment(\.managedObjectContext, managedObjectContext)
+                        default:
+                            EmptyView()
+                        }
+                    }
+            }
+            .presentationSizing(.page)
+        }
     } // View
 }
 
 
-//struct LibrarySourceView_Previews: PreviewProvider {
-//    static var previews: some View {
-//        LibrarySourceView(source: MockSource())
-//    }
-//}
+struct LibrarySourceView_Previews: PreviewProvider {
+    static var previews: some View {
+        NavigationStack {
+            LibrarySourceView(source: MockSource())
+                .environmentObject(SourceModel())
+                .environmentObject(NavigationStateManager())
+                .environment(\.managedObjectContext, PersistenceController.shared.container.viewContext)
+        }
+    }
+}
 
 class MockSource: Source {
 

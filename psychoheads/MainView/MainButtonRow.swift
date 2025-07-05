@@ -132,6 +132,22 @@ struct MainButtonRow: View {
             }
             
             Spacer()
+            
+            // Temp Clipping (temporary debug button)
+            Button(action: {
+                navigationStateManager.selectionPath.append(.tempClippingView)
+            }) {
+                VStack(spacing: 4) {
+                    Image(systemName: "eye.circle")
+                        .font(.system(size: 26, weight: .regular))
+                        .frame(height: 40)
+                    Text("Temp Clip")
+                        .font(.caption2)
+                }
+                //.padding(8)
+            }
+            
+            Spacer()
         }
     }
     
@@ -247,6 +263,22 @@ struct MainButtonRow: View {
                         .font(.system(size: 26, weight: .regular))
                         .frame(height: 40)
                     Text("Help")
+                        .font(.caption2)
+                }
+                //.padding(8)
+            }
+            
+            Spacer()
+            
+            // Temp Clipping (temporary debug button)
+            Button(action: {
+                navigationStateManager.selectionPath.append(.tempClippingView)
+            }) {
+                VStack(spacing: 4) {
+                    Image(systemName: "eye.circle")
+                        .font(.system(size: 26, weight: .regular))
+                        .frame(height: 40)
+                    Text("Temp Clip")
                         .font(.caption2)
                 }
                 //.padding(8)

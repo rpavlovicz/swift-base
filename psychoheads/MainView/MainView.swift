@@ -74,7 +74,7 @@ struct MainView: View {
                             .environmentObject(sourceModel)
                             .environmentObject(navigationStateManager)
                     case .clippingsSwipeView(let clippings, let currentIndex):
-                        ClippingsSwipeView(clippings: clippings, currentIndex: currentIndex)
+                        ClippingsSwipeViewWrapper(clippings: clippings, initialIndex: currentIndex)
                             .environmentObject(sourceModel)
                             .environmentObject(navigationStateManager)
                     case .searchClippings(let clippings):
@@ -109,6 +109,11 @@ struct MainView: View {
                         ProgressReportView()
                             .environmentObject(sourceModel)
                             .environmentObject(navigationStateManager)
+                    case .tempClippingView:
+                        TempClippingView()
+                            .environmentObject(sourceModel)
+                            .environmentObject(navigationStateManager)
+                            .environment(\.managedObjectContext, viewContext)
 
                     case .edit(let source):
                         // TODO: Create EditSourceView
@@ -122,6 +127,22 @@ struct MainView: View {
         } // NavigationStack
         
         
+    }
+}
+
+struct ClippingsSwipeViewWrapper: View {
+    let clippings: [Clipping]
+    let initialIndex: Int
+    @State private var currentIndex: Int
+    
+    init(clippings: [Clipping], initialIndex: Int) {
+        self.clippings = clippings
+        self.initialIndex = initialIndex
+        self._currentIndex = State(initialValue: initialIndex)
+    }
+    
+    var body: some View {
+        ClippingsSwipeView(clippings: clippings, currentIndex: $currentIndex)
     }
 }
 
