@@ -40,7 +40,6 @@ struct MainButtonRow: View {
                     Text("Add to DB")
                         .font(.caption2)
                 }
-                .padding(8)
             })
             
             Spacer()
@@ -54,7 +53,6 @@ struct MainButtonRow: View {
                     Text("Library")
                         .font(.caption2)
                 }
-                //.padding(8)
             })
             
             Spacer()
@@ -68,7 +66,6 @@ struct MainButtonRow: View {
                     Text("Collage")
                         .font(.caption2)
                 }
-                .padding(8)
             })
             
             Spacer()
@@ -82,8 +79,6 @@ struct MainButtonRow: View {
                     Text("Search")
                         .font(.caption2)
                 }
-                //.padding(8)
-            
             })
             
             Spacer()
@@ -97,7 +92,6 @@ struct MainButtonRow: View {
                     Text("Reports")
                         .font(.caption2)
                 }
-                //.padding(8)
             })
             
             Spacer()
@@ -111,7 +105,6 @@ struct MainButtonRow: View {
                     Text("Settings")
                         .font(.caption2)
                 }
-                .padding(8)
             })
             
             Spacer()
@@ -128,7 +121,6 @@ struct MainButtonRow: View {
                     Text("Help")
                         .font(.caption2)
                 }
-                //.padding(8)
             }
             
             Spacer()
@@ -144,7 +136,6 @@ struct MainButtonRow: View {
                     Text("Temp Clip")
                         .font(.caption2)
                 }
-                //.padding(8)
             }
             
             Spacer()
@@ -170,7 +161,6 @@ struct MainButtonRow: View {
                     Text("Add to DB")
                         .font(.caption2)
                 }
-                //.padding(8)
             })
             
             Spacer()
@@ -184,7 +174,6 @@ struct MainButtonRow: View {
                     Text("Library")
                         .font(.caption2)
                 }
-                //.padding(8)
             })
             
             Spacer()
@@ -198,7 +187,6 @@ struct MainButtonRow: View {
                     Text("Collage")
                         .font(.caption2)
                 }
-                //.padding(8)
             })
             
             Spacer()
@@ -212,7 +200,6 @@ struct MainButtonRow: View {
                     Text("Search")
                         .font(.caption2)
                 }
-                //.padding(8)
             
             })
                         
@@ -234,7 +221,6 @@ struct MainButtonRow: View {
                     Text("Reports")
                         .font(.caption2)
                 }
-                //.padding(8)
             })
             
             Spacer()
@@ -248,7 +234,6 @@ struct MainButtonRow: View {
                     Text("Settings")
                         .font(.caption2)
                 }
-                //.padding(8)
             })
             
             Spacer()
@@ -265,7 +250,6 @@ struct MainButtonRow: View {
                     Text("Help")
                         .font(.caption2)
                 }
-                //.padding(8)
             }
             
             Spacer()
@@ -281,7 +265,6 @@ struct MainButtonRow: View {
                     Text("Temp Clip")
                         .font(.caption2)
                 }
-                //.padding(8)
             }
             
             Spacer()

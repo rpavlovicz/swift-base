@@ -15,6 +15,7 @@
 
 import SwiftUI
 import FirebaseFirestore
+// Import CollageButtonRow from its own file
 
 struct CollageView: View {
     
@@ -23,6 +24,39 @@ struct CollageView: View {
     @State private var positions: [CGPoint] = []
     @State private var dragOffsets: [CGSize] = []
     @State private var invertZOrder = false
+    
+    struct CollageButton: Identifiable {
+        let id = UUID()
+        let label: String
+        let systemImage: String?
+        let action: () -> Void
+        let isEnabled: Bool
+    }
+    
+    var collageButtons: [CollageButton] {
+        [
+            CollageButton(
+                label: Constants.clown,
+                systemImage: nil,
+                action: {
+                    let randomClippings = Array(sourceModel.headClippings.shuffled().prefix(2))
+                    clippings = randomClippings
+                    positions = randomClippings.map { _ in CGPoint(x: UIScreen.main.bounds.width/2, y: displayHeight/2) }
+                    dragOffsets = randomClippings.map { _ in .zero }
+                    invertZOrder = false
+                },
+                isEnabled: true
+            ),
+            CollageButton(
+                label: "",
+                systemImage: "arrow.up.arrow.down",
+                action: {
+                    withAnimation { invertZOrder.toggle() }
+                },
+                isEnabled: !clippings.isEmpty
+            )
+        ]
+    }
     
     // Calculate available display space
     private var displayWidth: CGFloat {
@@ -95,98 +129,95 @@ struct CollageView: View {
     }
     
     var body: some View {
-        ZStack(alignment: .bottom) {
-            // Main content area
-            if !clippings.isEmpty {
-                ForEach(Array(clippings.enumerated()), id: \.element.id) { index, clipping in
-                    AsyncImage2(clipping: clipping, 
-                              placeholder: UIImage(), 
-                              imageUrlMid: clipping.imageUrlMid, 
-                              frameHeight: calculateImageSize(for: clipping).height)
-                        .frame(width: calculateImageSize(for: clipping).width,
-                               height: calculateImageSize(for: clipping).height)
-                        .position(x: positions[index].x + dragOffsets[index].width, 
-                                 y: positions[index].y + dragOffsets[index].height)
-                        .zIndex(Double(sortedIndices().firstIndex(of: index) ?? 0))
-                        .gesture(
-                            DragGesture()
-                                .onChanged { gesture in
-                                    dragOffsets[index] = gesture.translation
-                                }
-                                .onEnded { gesture in
-                                    positions[index].x += dragOffsets[index].width
-                                    positions[index].y += dragOffsets[index].height
-                                    dragOffsets[index] = .zero
-                                }
-                        )
-                }
-                
-                // Debug info
-                VStack {
-                    ForEach(clippings) { clipping in
-                        Text("Original: \(String(format: "%.1f", clipping.width)) x \(String(format: "%.1f", clipping.height)) cm")
-                            .font(.caption)
-                            .foregroundColor(.gray)
+        VStack(spacing: 0) {
+            ZStack {
+                if !clippings.isEmpty {
+                    ForEach(Array(clippings.enumerated()), id: \.element.id) { index, clipping in
+                        AsyncImage2(clipping: clipping,
+                                    placeholder: UIImage(),
+                                    imageUrlMid: clipping.imageUrlMid,
+                                    frameHeight: calculateImageSize(for: clipping).height)
+                            .frame(width: calculateImageSize(for: clipping).width,
+                                   height: calculateImageSize(for: clipping).height)
+                            .position(x: positions[index].x + dragOffsets[index].width,
+                                     y: positions[index].y + dragOffsets[index].height)
+                            .zIndex(Double(sortedIndices().firstIndex(of: index) ?? 0))
+                            .gesture(
+                                DragGesture()
+                                    .onChanged { gesture in
+                                        dragOffsets[index] = gesture.translation
+                                    }
+                                    .onEnded { gesture in
+                                        positions[index].x += dragOffsets[index].width
+                                        positions[index].y += dragOffsets[index].height
+                                        dragOffsets[index] = .zero
+                                    }
+                            )
                     }
+                } else {
+                    Text("No clippings loaded")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
-            } else {
-                Text("No clippings loaded")
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            
-            // Button area
-            HStack(spacing: 16) {
-                
-                // Load button
-                Spacer()
-                
-                Button(Constants.clown) {
+            CollageButtonRow(
+                onLoad: {
                     let randomClippings = Array(sourceModel.headClippings.shuffled().prefix(2))
                     clippings = randomClippings
-                    // Initialize positions and drag offsets for new clippings
-                    positions = randomClippings.map { _ in
-                        CGPoint(x: UIScreen.main.bounds.width/2, 
-                               y: displayHeight/2)
-                    }
+                    positions = randomClippings.map { _ in CGPoint(x: UIScreen.main.bounds.width/2, y: displayHeight/2) }
                     dragOffsets = randomClippings.map { _ in .zero }
-                    invertZOrder = false // Reset z-order when loading new images
-                }
-                .padding()
-                //.frame(maxWidth: .infinity)
-                .background(Color(UIColor.systemBackground))
-                
-                Spacer()
-                
-                // Invert z-order button
-                Button(action: {
-                    withAnimation {
-                        invertZOrder.toggle()
-                    }
-                }) {
-                    HStack {
-                        Image(systemName: "arrow.up.arrow.down")
-                    }
-                }
-                .padding()
-                //.frame(maxWidth: .infinity)
-                .background(Color(UIColor.systemBackground))
-                .disabled(clippings.isEmpty)
-                .opacity(clippings.isEmpty ? 0.5 : 1.0)
-                
-                Spacer()
-            }
-            .padding(.horizontal)
-            .padding(.bottom, 18)
-            .background(Color(UIColor.systemBackground))
-            //.shadow(radius: 2)
+                    invertZOrder = false
+                },
+                onInvert: {
+                    withAnimation { invertZOrder.toggle() }
+                },
+                invertEnabled: !clippings.isEmpty
+            )
+            .frame(maxWidth: .infinity, maxHeight: 40)
+
         }
-        .edgesIgnoringSafeArea(.bottom)
+        //.edgesIgnoringSafeArea(.bottom)
     }
 }
-//
-//struct CollageView_Previews: PreviewProvider {
-//    static var previews: some View {
-//        CollageView()
-//            .environmentObject(SourceModel())
-//    }
-//}
+
+// Add a thoughtful preview for CollageView
+struct CollageView_Previews: PreviewProvider {
+    static var previews: some View {
+        let mockSourceModel = SourceModel()
+        // Add a few mock clippings to the source model
+        let mockClipping1 = Clipping()
+        mockClipping1.id = "1"
+        mockClipping1.name = "Mock Head 1"
+        mockClipping1.width = 10.0
+        mockClipping1.height = 12.0
+        mockClipping1.imageUrlMid = "mock_url_1"
+        mockClipping1.isHead = true
+        mockClipping1.isBody = false
+        
+        let mockClipping2 = Clipping()
+        mockClipping2.id = "2"
+        mockClipping2.name = "Mock Head 2"
+        mockClipping2.width = 8.0
+        mockClipping2.height = 10.0
+        mockClipping2.imageUrlMid = "mock_url_2"
+        mockClipping2.isHead = true
+        mockClipping2.isBody = false
+        
+        let mockClipping3 = Clipping()
+        mockClipping3.id = "3"
+        mockClipping3.name = "Mock Head 3"
+        mockClipping3.width = 12.0
+        mockClipping3.height = 14.0
+        mockClipping3.imageUrlMid = "mock_url_3"
+        mockClipping3.isHead = true
+        mockClipping3.isBody = false
+        
+        let mockSource = Source(title: "Mock Source", year: "2024", month: "July")
+        mockSource.clippings = [mockClipping1, mockClipping2, mockClipping3]
+        mockSourceModel.sources = [mockSource]
+        
+        return CollageView()
+            .environmentObject(mockSourceModel)
+            .previewDevice("iPhone 14 Pro")
+            .previewDisplayName("CollageView - iPhone 14 Pro")
+    }
+}
