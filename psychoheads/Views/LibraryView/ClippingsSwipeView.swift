@@ -96,15 +96,20 @@ struct ClippingsSwipeView: View {
                                         currentIndex -= 1
                                     }
                                 }) {
-                                    Image(systemName: "chevron.left")
-                                        .font(.title2)
-                                        .foregroundColor(.primary)
+//                                    Image(systemName: "chevron.left")
+//                                        .font(.title2)
+//                                        .foregroundColor(.primary)
+//                                        .padding(12)
+//                                        .background(
+//                                            Circle()
+//                                                .fill(Color(.systemBackground))
+//                                                .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 1)
+//                                        )
+                                    Image(systemName: "chevron.compact.left")
+                                        .font(.title)
+                                        .foregroundColor(.white)
                                         .padding(12)
-                                        .background(
-                                            Circle()
-                                                .fill(Color(.systemBackground))
-                                                .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 1)
-                                        )
+                                        .shadow(color: .black.opacity(0.5), radius: 3, x: 0, y: 1)
                                 }
                                 .transition(.opacity)
                                 .disabled(currentIndex <= 0)
@@ -135,15 +140,21 @@ struct ClippingsSwipeView: View {
                                         currentIndex += 1
                                     }
                                 }) {
-                                    Image(systemName: "chevron.right")
-                                        .font(.title2)
-                                        .foregroundColor(.primary)
+                                    Image(systemName: "chevron.compact.right")
+                                        .font(.title)
+                                        .foregroundColor(.white)
                                         .padding(12)
-                                        .background(
-                                            Circle()
-                                                .fill(Color(.systemBackground))
-                                                .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 1)
-                                        )
+                                        .shadow(color: .black.opacity(0.5), radius: 3, x: 0, y: 1)
+
+//                                    Image(systemName: "chevron.right")
+//                                        .font(.title2)
+//                                        .foregroundColor(.primary)
+//                                        .padding(12)
+//                                        .background(
+//                                            Circle()
+//                                                .fill(Color(.systemBackground))
+//                                                .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 1)
+//                                        )
                                 }
                                 .transition(.opacity)
                                 .disabled(currentIndex >= clippings.count - 1)
