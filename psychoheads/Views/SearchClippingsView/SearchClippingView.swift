@@ -31,7 +31,27 @@ struct SearchClippingView: View {
     
     @State private var searchHeads: Bool = true
     @State private var searchTags: Bool = false
+    @State private var searchAllHeads: Bool = false
+    @State private var searchAllBodies: Bool = false
     @State private var lookingDirection: LookingDirection?
+    
+    // Filter state variables
+    @State private var filterMan: Bool = false
+    @State private var filterWoman: Bool = false
+    @State private var filterTrans: Bool = false
+    @State private var filterWhite: Bool = false
+    @State private var filterBlack: Bool = false
+    @State private var filterLatino: Bool = false
+    @State private var filterAsian: Bool = false
+    @State private var filterIndian: Bool = false
+    @State private var filterNative: Bool = false
+    @State private var filterBlackAndWhite: Bool = false
+    @State private var filterAnimal: Bool = false
+    
+    // Height range state variables
+    @State private var minHeight: Double = 3.0
+    @State private var maxHeight: Double = 15.0
+    @State private var heightRange: ClosedRange<Double> = 3.0...15.0
     
     let placeholderImage: UIImage? = UIImage(named: "clipping_thumb")
     
@@ -76,15 +96,91 @@ struct SearchClippingView: View {
                 return !clipping.isHead || directionMatch
             }
         } else {
-            return sourceModel.sources.flatMap { $0.clippings }
-                .filter { clipping in
-                    let nameMatch = searchHeads && clipping.name.lowercased().contains(searchText.lowercased())
-                    let tagMatch = searchTags && clipping.tags.contains { tag in
-                        tag.lowercased().contains(searchText.lowercased())
-                    }
-                    let directionMatch = (clipping.isHead && !clipping.isBody) && (lookingDirection == nil || clipping.lookingDirection == lookingDirection?.rawValue)
-                    return (nameMatch || tagMatch) && (!clipping.isHead || directionMatch)
+            let allClippings = sourceModel.sources.flatMap { $0.clippings }
+            
+            // First, filter by All Heads or All Bodies if selected
+            var filteredClippings = allClippings
+            if searchAllHeads {
+                filteredClippings = filteredClippings.filter { $0.isHead && !$0.isBody }
+            } else if searchAllBodies {
+                filteredClippings = filteredClippings.filter { $0.isBody }
+            }
+            
+            // Apply gender filters
+            let activeGenderFilters = [filterMan, filterWoman, filterTrans].filter { $0 }
+            if !activeGenderFilters.isEmpty {
+                filteredClippings = filteredClippings.filter { clipping in
+                    if filterMan && clipping.isMan { return true }
+                    if filterWoman && clipping.isWoman { return true }
+                    if filterTrans && clipping.isTrans { return true }
+                    return false
                 }
+            }
+            
+            // Apply race filters
+            let activeRaceFilters = [filterWhite, filterBlack, filterLatino, filterAsian, filterIndian, filterNative].filter { $0 }
+            if !activeRaceFilters.isEmpty {
+                filteredClippings = filteredClippings.filter { clipping in
+                    if filterWhite && clipping.isWhite { return true }
+                    if filterBlack && clipping.isBlack { return true }
+                    if filterLatino && clipping.isLatino { return true }
+                    if filterAsian && clipping.isAsian { return true }
+                    if filterIndian && clipping.isIndian { return true }
+                    if filterNative && clipping.isNative { return true }
+                    return false
+                }
+            }
+            
+            // Apply black and white filter (separate from race filters)
+            if filterBlackAndWhite {
+                filteredClippings = filteredClippings.filter { $0.isBlackAndWhite }
+            }
+            
+            // Apply animal filter
+            if filterAnimal {
+                filteredClippings = filteredClippings.filter { $0.isAnimal }
+            }
+            
+            // Apply height filter
+            let hasHeightFilter = minHeight > heightRange.lowerBound || maxHeight < heightRange.upperBound
+            if hasHeightFilter {
+                filteredClippings = filteredClippings.filter { clipping in
+                    clipping.height >= minHeight && clipping.height <= maxHeight
+                }
+            }
+            
+            // Then apply search text filters
+            return filteredClippings.filter { clipping in
+                let nameMatch = searchHeads && clipping.name.lowercased().contains(searchText.lowercased())
+                let tagMatch = searchTags && clipping.tags.contains { tag in
+                    tag.lowercased().contains(searchText.lowercased())
+                }
+                
+                // If All Heads is selected, show all head clippings (with optional text filtering)
+                if searchAllHeads {
+                    let hasTextFilter = !searchText.isEmpty && (searchHeads || searchTags)
+                    if hasTextFilter {
+                        return nameMatch || tagMatch
+                    } else {
+                        return true // Show all head clippings when no text filter
+                    }
+                } else if searchAllBodies {
+                    // If All Bodies is selected, show all body clippings (with optional text filtering)
+                    let hasTextFilter = !searchText.isEmpty && (searchHeads || searchTags)
+                    if hasTextFilter {
+                        return nameMatch || tagMatch
+                    } else {
+                        return true // Show all body clippings when no text filter
+                    }
+                } else {
+                    // Normal search behavior
+                    return nameMatch || tagMatch
+                }
+            }.filter { clipping in
+                // Apply direction filter to head clippings only
+                let directionMatch = (clipping.isHead && !clipping.isBody) && (lookingDirection == nil || clipping.lookingDirection == lookingDirection?.rawValue)
+                return !clipping.isHead || directionMatch
+            }
         }
     }
     
@@ -114,11 +210,31 @@ struct SearchClippingView: View {
                 Image(systemName: "chevron.compact.up")
             }
             .padding(.bottom, 5)
-            .sheet(isPresented: $expandSheet) {
+                            .sheet(isPresented: $expandSheet) {
                 
                 Form {
                     Section(header: Text("Search Type")) {
-                        SearchSelectorView1(searchHeads: $searchHeads, searchTags: $searchTags, lookingDirection: $lookingDirection)
+                        SearchSelectorView1(
+                            searchHeads: $searchHeads, 
+                            searchTags: $searchTags, 
+                            searchAllHeads: $searchAllHeads, 
+                            searchAllBodies: $searchAllBodies,
+                            lookingDirection: $lookingDirection,
+                            filterMan: $filterMan,
+                            filterWoman: $filterWoman,
+                            filterTrans: $filterTrans,
+                            filterWhite: $filterWhite,
+                            filterBlack: $filterBlack,
+                            filterLatino: $filterLatino,
+                            filterAsian: $filterAsian,
+                            filterIndian: $filterIndian,
+                            filterNative: $filterNative,
+                            filterBlackAndWhite: $filterBlackAndWhite,
+                            filterAnimal: $filterAnimal,
+                            minHeight: $minHeight,
+                            maxHeight: $maxHeight,
+                            heightRange: $heightRange
+                        )
                     }
                 }
                 .background(Color.clear) // Set the background to clear
@@ -180,12 +296,61 @@ struct SearchClippingView: View {
     }
 }
 
-//struct SearchClippingView_Previews: PreviewProvider {
-//
-//    static var previews: some View {
-//        SearchClippingView()
-//            .environmentObject(SourceModel())
-//            .environmentObject(NavigationStateManager())
-//    }
-//}
+struct SearchClippingView_Previews: PreviewProvider {
+    static var previews: some View {
+        let mockSourceModel = SourceModel()
+        
+        // Create mock clippings for preview
+        let mockClipping1 = Clipping()
+        mockClipping1.id = "1"
+        mockClipping1.name = "John Doe"
+        mockClipping1.tags = ["actor", "hollywood", "leading_man"]
+        mockClipping1.isHead = true
+        mockClipping1.isBody = false
+        mockClipping1.lookingDirection = "left"
+        mockClipping1.imageUrlMid = "mock_url_1"
+        
+        let mockClipping2 = Clipping()
+        mockClipping2.id = "2"
+        mockClipping2.name = "Jane Smith"
+        mockClipping2.tags = ["actress", "drama", "award_winner"]
+        mockClipping2.isHead = true
+        mockClipping2.isBody = false
+        mockClipping2.lookingDirection = "right"
+        mockClipping2.imageUrlMid = "mock_url_2"
+        
+        let mockClipping3 = Clipping()
+        mockClipping3.id = "3"
+        mockClipping3.name = "Bob Wilson"
+        mockClipping3.tags = ["character_actor", "comedy"]
+        mockClipping3.isHead = true
+        mockClipping3.isBody = false
+        mockClipping3.lookingDirection = "fullFace"
+        mockClipping3.imageUrlMid = "mock_url_3"
+        
+        let mockSource = Source(title: "Mock Magazine", year: "2024", month: "July")
+        mockSource.clippings = [mockClipping1, mockClipping2, mockClipping3]
+        mockSourceModel.sources = [mockSource]
+        
+        return Group {
+            // Default state
+            SearchClippingView()
+                .environmentObject(mockSourceModel)
+                .environmentObject(NavigationStateManager())
+                .environment(\.managedObjectContext, PersistenceController.shared.container.viewContext)
+                .previewDisplayName("SearchClippingView - Default")
+            
+            // With search text
+            SearchClippingView()
+                .environmentObject(mockSourceModel)
+                .environmentObject(NavigationStateManager())
+                .environment(\.managedObjectContext, PersistenceController.shared.container.viewContext)
+                .onAppear {
+                    // Simulate search text
+                    // Note: This would need to be implemented with a way to set initial state
+                }
+                .previewDisplayName("SearchClippingView - With Results")
+        }
+    }
+}
 
