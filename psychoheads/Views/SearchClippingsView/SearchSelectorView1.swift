@@ -373,7 +373,7 @@ struct SearchSelectorView1: View {
                             .foregroundColor(.secondary)
                     }
                     
-                    RangeSlider(
+                    RangeSlider2(
                         minValue: $minHeight,
                         maxValue: $maxHeight,
                         range: heightRange,

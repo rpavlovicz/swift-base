@@ -2,8 +2,8 @@ import SwiftUI
 
 struct CollageButtonRow: View {
     let onLoad: () -> Void
-    let onInvert: () -> Void
-    let invertEnabled: Bool
+    let onAddHead: () -> Void
+    let onMenu: () -> Void
     
     var body: some View {
         ZStack {
@@ -22,17 +22,25 @@ struct CollageButtonRow: View {
                     }
                 }
                 Spacer()
-                Button(action: onInvert) {
+                Button(action: onAddHead) {
                     VStack(spacing: 4) {
-                        Image(systemName: "arrow.up.arrow.down")
+                        Image(systemName: "plus.circle")
                             .font(.system(size: 26, weight: .regular))
                             .frame(height: 40)
-                        Text("Invert")
+                        Text("Add Head")
                             .font(.caption2)
                     }
                 }
-                .disabled(!invertEnabled)
-                .opacity(invertEnabled ? 1.0 : 0.5)
+                Spacer()
+                Button(action: onMenu) {
+                    VStack(spacing: 4) {
+                        Image(systemName: "line.3.horizontal")
+                            .font(.system(size: 26, weight: .regular))
+                            .frame(height: 40)
+                        Text("Menu")
+                            .font(.caption2)
+                    }
+                }
                 Spacer()
             }
             .padding(.top, 10)

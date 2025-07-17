@@ -8,24 +8,27 @@
 import SwiftUI
 
 struct RangeSlider2: View {
-    @State var width: CGFloat = 0
-    @State var widthTow: CGFloat = 15
-    @State var height: CGFloat = 15
-    @State var totalScreen: CGFloat = 0
+    @Binding var minValue: Double
+    @Binding var maxValue: Double
+    let range: ClosedRange<Double>
+    let step: Double
+    let accentColor: Color
+    
+    @State var selectedMinPosition: CGFloat = 0
+    @State var selectedMaxPosition: CGFloat = 15
+    @State var totalSliderWidth: CGFloat = 0
     
     @State var isDraggingLeft = false
     @State var isDraggingRight = false
     
-    let maxValue: CGFloat = 1000
     let offsetValue: CGFloat = 40
-    let barfillColor: Color
     
     var lowerValue: Int {
-        Int(map(value: width, from: 0...totalScreen, to: 0...maxValue))
+        Int(map(value: selectedMinPosition, from: 0...totalSliderWidth, to: range))
     }
     
     var upperValue: Int {
-        Int(map(value: widthTow, from: 0...totalScreen, to: 0...maxValue))
+        Int(map(value: selectedMaxPosition, from: 0...totalSliderWidth, to: range))
     }
     
     var body: some View {
@@ -35,8 +38,8 @@ struct RangeSlider2: View {
                 
                 VStack(spacing: 30) {
                     
-                    Text("\(lowerValue) cm - \(upperValue) cm").bold()
-                        .foregroundStyle(barfillColor)
+                    Text("\(String(format: "%.1f", Double(lowerValue))) - \(String(format: "%.1f", Double(upperValue))) cm").bold()
+                        .foregroundStyle(accentColor)
 
                     ZStack(alignment: .leading) {
                         
@@ -50,29 +53,29 @@ struct RangeSlider2: View {
                         
                         // selected range color bar
                         Rectangle()
-                            .foregroundStyle(barfillColor)
-                            .frame(width: widthTow - width, height: 6)
-                            .offset(x: width + 20)
+                            .foregroundStyle(accentColor)
+                            .frame(width: selectedMaxPosition - selectedMinPosition, height: 6)
+                            .offset(x: selectedMinPosition + 20)
                         
                         HStack(spacing: 0) {
                             DraggableCircle(isLeft: true,
                                             isDragging: $isDraggingLeft,
-                                            position: $width,
-                                            otherPosition: $widthTow,
-                                            limit: totalScreen,
-                                            circleColor: barfillColor)
+                                            position: $selectedMinPosition,
+                                            otherPosition: $selectedMaxPosition,
+                                            limit: totalSliderWidth,
+                                            circleColor: accentColor)
                             DraggableCircle(isLeft: false,
                                             isDragging: $isDraggingRight,
-                                            position: $widthTow,
-                                            otherPosition: $width,
-                                            limit: totalScreen,
-                                            circleColor: barfillColor)
+                                            position: $selectedMaxPosition,
+                                            otherPosition: $selectedMinPosition,
+                                            limit: totalSliderWidth,
+                                            circleColor: accentColor)
                         } // draggable circle HStack
                         
                         ValueBox(isDragging: isDraggingLeft, value: lowerValue,
-                                 position: width, xOffset: -18)
+                                 position: selectedMinPosition, xOffset: -18)
                         ValueBox(isDragging: isDraggingRight, value: upperValue,
-                                 position: widthTow, xOffset: 0)
+                                 position: selectedMaxPosition, xOffset: 0)
                             
                     } // bar ZStack
                     .offset(y: 8)
@@ -81,7 +84,16 @@ struct RangeSlider2: View {
                 .frame(maxWidth: geometry.size.width, maxHeight: 130)
                 //.padding(.horizontal, 30)
                 .onAppear() {
-                    totalScreen = geometry.size.width - offsetValue
+                    totalSliderWidth = geometry.size.width - offsetValue
+                    // Initialize positions based on current values
+                    selectedMinPosition = map(value: minValue, from: range, to: 0...totalSliderWidth)
+                    selectedMaxPosition = map(value: maxValue, from: range, to: 0...totalSliderWidth)
+                }
+                .onChange(of: selectedMinPosition) { newPosition in
+                    minValue = map(value: newPosition, from: 0...totalSliderWidth, to: range)
+                }
+                .onChange(of: selectedMaxPosition) { newPosition in
+                    maxValue = map(value: newPosition, from: 0...totalSliderWidth, to: range)
                 }
 
             } // GeometryReader
@@ -102,6 +114,22 @@ struct RangeSlider2: View {
             guard inputRange != 0 else { return 0 }
             let outputRange = to.upperBound - to.lowerBound
             return (value - from.lowerBound) / inputRange * outputRange + to.lowerBound
+        }
+    
+    func map(value: Double, from: ClosedRange<Double>, to: ClosedRange<CGFloat>) ->
+        CGFloat {
+            let inputRange = from.upperBound - from.lowerBound
+            guard inputRange != 0 else { return 0 }
+            let outputRange = to.upperBound - to.lowerBound
+            return CGFloat((value - from.lowerBound) / inputRange) * outputRange + to.lowerBound
+        }
+    
+    func map(value: CGFloat, from: ClosedRange<CGFloat>, to: ClosedRange<Double>) ->
+        Double {
+            let inputRange = from.upperBound - from.lowerBound
+            guard inputRange != 0 else { return 0 }
+            let outputRange = to.upperBound - to.lowerBound
+            return Double((value - from.lowerBound) / inputRange) * outputRange + to.lowerBound
         }
     
 }
@@ -168,5 +196,11 @@ struct ValueBox: View {
 } // ValueBox struct
 
 #Preview {
-    RangeSlider2(barfillColor: Color(.green))
+    RangeSlider2(
+        minValue: .constant(3.0),
+        maxValue: .constant(10.0),
+        range: 2.0...15.0,
+        step: 0.1,
+        accentColor: .green
+    )
 }

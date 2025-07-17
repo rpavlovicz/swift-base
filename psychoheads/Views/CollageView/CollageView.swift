@@ -17,6 +17,7 @@ import SwiftUI
 import FirebaseFirestore
 // Import CollageButtonRow from its own file
 
+
 struct CollageView: View {
     
     @EnvironmentObject var sourceModel: SourceModel
@@ -25,6 +26,10 @@ struct CollageView: View {
     @State private var dragOffsets: [CGSize] = []
     @State private var invertZOrder = false
     @State private var geometrySize: CGSize = .zero
+    
+    // Side Menu State
+    @State private var presentSideMenu = false
+    @State private var clippingOrder: [String] = [] // Track clipping order by ID
     
     struct CollageButton: Identifiable {
         let id = UUID()
@@ -139,6 +144,39 @@ struct CollageView: View {
         invertZOrder = false
     }
     
+    // Reorder positions when clippings are reordered
+    private func reorderPositions(from: IndexSet, to: Int) {
+        positions.move(fromOffsets: from, toOffset: to)
+        dragOffsets = clippings.map { _ in .zero }
+    }
+    
+    // Add another random head clipping
+    private func addRandomHead() {
+        let availableHeads = sourceModel.headClippings.filter { head in
+            !clippings.contains { $0.id == head.id }
+        }
+        
+        guard let randomHead = availableHeads.randomElement() else {
+            // No more unique heads available
+            return
+        }
+        
+        clippings.append(randomHead)
+        
+        // Calculate position for the new clipping
+        let imageSize = calculateImageSize(for: randomHead)
+        let centerX = geometrySize.width / 2
+        let centerY = geometrySize.height / 2
+        
+        // Position the new clipping with some random offset
+        let randomOffsetX = CGFloat.random(in: -50...50)
+        let randomOffsetY = CGFloat.random(in: -50...50)
+        let newPosition = CGPoint(x: centerX + randomOffsetX, y: centerY + randomOffsetY)
+        
+        positions.append(newPosition)
+        dragOffsets.append(.zero)
+    }
+    
     // Calculate proper image size based on clipping dimensions and available space (match ClippingsSwipeView)
     private func calculateImageSize(for clipping: Clipping) -> CGSize {
         let maxWidthFraction: CGFloat = 0.65
@@ -178,104 +216,184 @@ struct CollageView: View {
         return size.width * size.height
     }
     
-    // Get sorted indices by area
-    private func sortedIndices() -> [Int] {
-        let sorted = clippings.indices.sorted { index1, index2 in
-            calculateArea(for: clippings[index1]) > calculateArea(for: clippings[index2])
+    // Get z-index order based on array order (side menu controls this)
+    private func zIndexOrder() -> [Int] {
+        if invertZOrder {
+            return Array(clippings.indices).reversed()
+        } else {
+            return Array(clippings.indices)
         }
-        return invertZOrder ? sorted.reversed() : sorted
     }
     
     var body: some View {
-        VStack(spacing: 0) {
-            GeometryReader { geometry in
-                ZStack(alignment: .bottomTrailing) {
-                    // Center guide lines
-                    VStack {
-                        // Vertical center line
-                        Rectangle()
-                            .fill(Color.red.opacity(0.5))
-                            .frame(width: 1)
-                            .frame(maxHeight: .infinity)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    
-                    HStack {
-                        // Horizontal center line
-                        Rectangle()
-                            .fill(Color.blue.opacity(0.5))
-                            .frame(height: 1)
-                            .frame(maxWidth: .infinity)
-                    }
-                    .frame(maxHeight: .infinity, alignment: .center)
-                    
-                    if !clippings.isEmpty {
-                        ForEach(Array(clippings.enumerated()), id: \.element.id) { index, clipping in
-                            let imageSize = calculateImageSize(for: clipping)
-                            AsyncImage2(clipping: clipping,
-                                        placeholder: UIImage(),
-                                        imageUrlMid: clipping.imageUrlMid,
-                                        frameHeight: imageSize.height)
-                                .frame(width: imageSize.width,
-                                       height: imageSize.height)
-                                .position(x: positions[index].x + dragOffsets[index].width,
-                                         y: positions[index].y + dragOffsets[index].height)
-                                .zIndex(Double(sortedIndices().firstIndex(of: index) ?? 0))
-                                .gesture(
-                                    DragGesture()
-                                        .onChanged { gesture in
-                                            dragOffsets[index] = gesture.translation
-                                        }
-                                        .onEnded { gesture in
-                                            positions[index].x += dragOffsets[index].width
-                                            positions[index].y += dragOffsets[index].height
-                                            dragOffsets[index] = .zero
-                                        }
-                                )
+        ZStack {
+            VStack(spacing: 0) {
+                GeometryReader { geometry in
+                    ZStack(alignment: .bottomTrailing) {
+                        // Center guide lines
+                        VStack {
+                            // Vertical center line
+                            Rectangle()
+                                .fill(Color.red.opacity(0.5))
+                                .frame(width: 1)
+                                .frame(maxHeight: .infinity)
                         }
-                    } else {
-                        Text("No clippings loaded")
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    }
-                    
-                    // Scaling indicator overlay (positioned like in ClippingsSwipeView)
-                    if !clippings.isEmpty {
-                        let largestClipping = clippings.max(by: { calculateImageSize(for: $0).width * calculateImageSize(for: $0).height < calculateImageSize(for: $1).width * calculateImageSize(for: $1).height })!
-                        let imageSize = calculateImageSize(for: largestClipping)
-                        HStack(spacing: 4) {
-                            Image(systemName: "square.resize.down")
-                                .font(.caption)
-                            Text(scaleIndicatorText(for: largestClipping, imageSize: imageSize))
-                                .font(.caption)
-                                .fontWeight(.medium)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        
+                        HStack {
+                            // Horizontal center line
+                            Rectangle()
+                                .fill(Color.blue.opacity(0.5))
+                                .frame(height: 1)
+                                .frame(maxWidth: .infinity)
                         }
-                        .padding(6)
-                        .background(
-                            RoundedRectangle(cornerRadius: 6)
-                                .fill(Color(.systemBackground).opacity(0.9))
-                                .shadow(color: .black.opacity(0.2), radius: 2, x: 0, y: 1)
-                        )
-                        .padding(.trailing, 10)
-                        .padding(.bottom, 27)
+                        .frame(maxHeight: .infinity, alignment: .center)
+                        
+                        if !clippings.isEmpty {
+                            ForEach(Array(clippings.enumerated()), id: \.element.id) { index, clipping in
+                                let imageSize = calculateImageSize(for: clipping)
+                                AsyncImage2(clipping: clipping,
+                                            placeholder: UIImage(),
+                                            imageUrlMid: clipping.imageUrlMid,
+                                            frameHeight: imageSize.height)
+                                    .frame(width: imageSize.width,
+                                           height: imageSize.height)
+                                    .position(x: positions[index].x + dragOffsets[index].width,
+                                             y: positions[index].y + dragOffsets[index].height)
+                                    .zIndex(Double(zIndexOrder().firstIndex(of: index) ?? 0))
+                                    .gesture(
+                                        DragGesture()
+                                            .onChanged { gesture in
+                                                dragOffsets[index] = gesture.translation
+                                            }
+                                            .onEnded { gesture in
+                                                positions[index].x += dragOffsets[index].width
+                                                positions[index].y += dragOffsets[index].height
+                                                dragOffsets[index] = .zero
+                                            }
+                                    )
+                            }
+                        } else {
+                            Text("No clippings loaded")
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        }
+                        
+                        // Scaling indicator overlay (positioned like in ClippingsSwipeView)
+                        if !clippings.isEmpty {
+                            let largestClipping = clippings.max(by: { calculateImageSize(for: $0).width * calculateImageSize(for: $0).height < calculateImageSize(for: $1).width * calculateImageSize(for: $1).height })!
+                            let imageSize = calculateImageSize(for: largestClipping)
+                            HStack(spacing: 4) {
+                                Image(systemName: "square.resize.down")
+                                    .font(.caption)
+                                Text(scaleIndicatorText(for: largestClipping, imageSize: imageSize))
+                                    .font(.caption)
+                                    .fontWeight(.medium)
+                            }
+                            .padding(6)
+                            .background(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .fill(Color(.systemBackground).opacity(0.9))
+                                    .shadow(color: .black.opacity(0.2), radius: 2, x: 0, y: 1)
+                            )
+                            .padding(.trailing, 10)
+                            .padding(.bottom, 27)
+                        }
+                    }
+                    .frame(width: geometry.size.width, height: geometry.size.height)
+                    .onAppear {
+                        geometrySize = geometry.size
+                    }
+                    .onChange(of: geometry.size) { newSize in
+                        geometrySize = newSize
                     }
                 }
-                .frame(width: geometry.size.width, height: geometry.size.height)
-                .onAppear {
-                    geometrySize = geometry.size
-                }
-                .onChange(of: geometry.size) { newSize in
-                    geometrySize = newSize
+                CollageButtonRow(
+                    onLoad: loadRandomClippings,
+                    onAddHead: addRandomHead,
+                    onMenu: {
+                        withAnimation { presentSideMenu.toggle() }
+                    }
+                )
+                .frame(maxHeight: 40)
+            }
+            // Side Menu overlay
+            SideMenu(isShowing: $presentSideMenu, content: AnyView(
+                SideMenuView(
+                    presentSideMenu: $presentSideMenu,
+                    clippings: $clippings,
+                    menuWidth: UIScreen.main.bounds.width * 0.45,
+                    onReorder: reorderPositions
+                )
+            ))
+        }
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                if !presentSideMenu {
+                    Button(action: { withAnimation { presentSideMenu.toggle() } }) {
+                        Image(systemName: "line.3.horizontal")
+                            .imageScale(.large)
+                    }
                 }
             }
-            CollageButtonRow(
-                onLoad: loadRandomClippings,
-                onInvert: {
-                    withAnimation { invertZOrder.toggle() }
-                },
-                invertEnabled: !clippings.isEmpty
-            )
-            .frame(maxHeight: 40)
         }
+    }
+}
+
+
+// Simple Side Menu Container with swipe-to-close and swipe-reveal
+struct SideMenu: View {
+    let isShowing: Binding<Bool>
+    let content: AnyView
+    
+    @State private var dragOffset: CGFloat = 0.0
+    let menuWidth = UIScreen.main.bounds.width * 0.45
+    let closeThreshold: CGFloat = 60
+    
+    var body: some View {
+        ZStack {
+            if isShowing.wrappedValue {
+                Rectangle()
+                    .fill(Color.black.opacity(0.3))
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        withAnimation(.interactiveSpring()) {
+                            isShowing.wrappedValue = false
+                        }
+                    }
+                HStack {
+                    Spacer()
+                    content
+                        .frame(width: menuWidth)
+                        .background(Color(.systemBackground))
+                        .offset(x: dragOffset)
+                        .gesture(
+                            DragGesture()
+                                .onChanged { value in
+                                    // Only allow dragging right (positive x)
+                                    if value.translation.width > 0 {
+                                        dragOffset = value.translation.width
+                                    }
+                                }
+                                .onEnded { value in
+                                    if value.translation.width > closeThreshold {
+                                        withAnimation(.interactiveSpring()) {
+                                            isShowing.wrappedValue = false
+                                        }
+                                        dragOffset = 0
+                                    } else {
+                                        withAnimation(.interactiveSpring()) {
+                                            dragOffset = 0
+                                        }
+                                    }
+                                }
+                        )
+                        .transition(.move(edge: .trailing))
+                        .animation(.interactiveSpring(), value: dragOffset)
+                }
+            }
+        }
+        .animation(.easeInOut, value: isShowing.wrappedValue)
     }
 }
 
@@ -315,9 +433,12 @@ struct CollageView_Previews: PreviewProvider {
         mockSource.clippings = [mockClipping1, mockClipping2, mockClipping3]
         mockSourceModel.sources = [mockSource]
         
-        return CollageView()
-            .environmentObject(mockSourceModel)
-            .previewDevice("iPhone 14 Pro")
-            .previewDisplayName("CollageView - iPhone 14 Pro")
+        return NavigationView {
+            CollageView()
+                .environmentObject(mockSourceModel)
+                .navigationTitle("Collage")
+        }
+        .previewDevice("iPhone 14 Pro")
+        .previewDisplayName("CollageView - iPhone 14 Pro")
     }
 }

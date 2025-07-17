@@ -53,6 +53,19 @@ struct SearchClippingView: View {
     @State private var maxHeight: Double = 15.0
     @State private var heightRange: ClosedRange<Double> = 3.0...15.0
     
+    // Dynamic range calculation
+    var dynamicHeightRange: ClosedRange<Double> {
+        let allClippings = sourceModel.sources.flatMap { $0.clippings }
+        let heights = allClippings.map { $0.height }.filter { $0 > 0 }
+        
+        guard !heights.isEmpty else { return 3.0...15.0 }
+        
+        let minAvailable = heights.min() ?? 3.0
+        let maxAvailable = heights.max() ?? 15.0
+        
+        return minAvailable...maxAvailable
+    }
+    
     let placeholderImage: UIImage? = UIImage(named: "clipping_thumb")
     
     @FocusState private var focusedField: Field?
@@ -102,9 +115,10 @@ struct SearchClippingView: View {
             var filteredClippings = allClippings
             if searchAllHeads {
                 filteredClippings = filteredClippings.filter { $0.isHead && !$0.isBody }
-            } else if searchAllBodies {
-                filteredClippings = filteredClippings.filter { $0.isBody }
             }
+//                else if searchAllBodies {
+//                filteredClippings = filteredClippings.filter { $0.isBody }
+//            }
             
             // Apply gender filters
             let activeGenderFilters = [filterMan, filterWoman, filterTrans].filter { $0 }
@@ -142,7 +156,7 @@ struct SearchClippingView: View {
             }
             
             // Apply height filter
-            let hasHeightFilter = minHeight > heightRange.lowerBound || maxHeight < heightRange.upperBound
+            let hasHeightFilter = minHeight > dynamicHeightRange.lowerBound || maxHeight < dynamicHeightRange.upperBound
             if hasHeightFilter {
                 filteredClippings = filteredClippings.filter { clipping in
                     clipping.height >= minHeight && clipping.height <= maxHeight
@@ -233,7 +247,7 @@ struct SearchClippingView: View {
                             filterAnimal: $filterAnimal,
                             minHeight: $minHeight,
                             maxHeight: $maxHeight,
-                            heightRange: $heightRange
+                            heightRange: .constant(dynamicHeightRange)
                         )
                     }
                 }
@@ -288,6 +302,11 @@ struct SearchClippingView: View {
                 .focused($focusedField, equals: .tagSearchField)
                 .onChange(of: focusedField) { newValue in
                     isTagSearchActive = (newValue == .tagSearchField)
+                }
+                .onChange(of: dynamicHeightRange) { newRange in
+                    // Reset slider to full range when available range changes
+                    minHeight = newRange.lowerBound
+                    maxHeight = newRange.upperBound
                 }
             
         } // main VStack
