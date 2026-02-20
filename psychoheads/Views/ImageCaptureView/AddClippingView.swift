@@ -24,7 +24,7 @@ import CoreData
 struct AddClippingView: View {
     
     enum ActiveAlert: Identifiable {
-        case success, measureError
+        case success, measureError, uploadError
         
         var id: Int {
             switch self {
@@ -32,6 +32,8 @@ struct AddClippingView: View {
                 return 1
             case .measureError:
                 return 2
+            case .uploadError:
+                return 3
             }
         }
     }
@@ -771,6 +773,11 @@ struct AddClippingView: View {
                     docRef.getDocument { (documentSnapshot, error) in
                         if let error = error {
                             print("Error getting document: \(error)")
+                            DispatchQueue.main.async {
+                                isSubmitting = false
+                                errorMessage = "Could not save to database: \(error.localizedDescription)"
+                                activeAlert = .uploadError
+                            }
                             return
                         }
                         
@@ -825,13 +832,20 @@ struct AddClippingView: View {
                                 let imageHelperFunctions = ImageHelperFunctions()
                                 imageHelperFunctions.uploadClippingImages(image: image!, docName: docName)
                                 
-                                isAdded = true
-                                isSubmitting = false
-                                lastSourceId = source?.id ?? ""
-                                activeAlert = .success
+                                DispatchQueue.main.async {
+                                    isAdded = true
+                                    isSubmitting = false
+                                    lastSourceId = source?.id ?? ""
+                                    activeAlert = .success
+                                }
                             }
                         } else {
                             print("Document does not exist")
+                            DispatchQueue.main.async {
+                                isSubmitting = false
+                                errorMessage = "The source document was not found. Please try again."
+                                activeAlert = .uploadError
+                            }
                         }
                     } // docRef.getDocument
                     
@@ -883,10 +897,16 @@ struct AddClippingView: View {
                     }
                     
                 } label: {
-                    Text("Add to Database")
+                    if isSubmitting {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .scaleEffect(0.9)
+                    } else {
+                        Text("Add to Database")
+                    }
                 }
-                .disabled(!isFormComplete || isAdded)
-                .buttonStyle(ButtonStyle1(inputColor: isFormComplete && !isAdded ? .blue : .gray))
+                .disabled(!isFormComplete || isAdded || isSubmitting)
+                .buttonStyle(ButtonStyle1(inputColor: (isFormComplete && !isAdded && !isSubmitting) ? .blue : .gray))
                 .padding(.bottom, 30)
                 .padding(.top, 10)
                 .padding(.horizontal, 40)
@@ -905,6 +925,8 @@ struct AddClippingView: View {
                 }))
             case .measureError:
                 return Alert(title: Text("Error"), message: Text(errorMessage), dismissButton: .default(Text("OK")))
+            case .uploadError:
+                return Alert(title: Text("Upload failed"), message: Text(errorMessage), dismissButton: .default(Text("OK")))
             }
         } // alert
         
