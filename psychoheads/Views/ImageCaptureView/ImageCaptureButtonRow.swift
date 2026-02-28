@@ -9,10 +9,13 @@ import SwiftUI
 
 struct ImageCaptureButtonRow: View {
     @Binding var selectedImage: UIImage?
+    var displayImage: UIImage?
     @Binding var isSourceMenuShowing: Bool
     @Binding var addDatabaseItemMenu: Bool
     @Binding var tabBinding: Int
     @Binding var backgroundColorIndex: Int
+    var isSegmenting: Bool = false
+    var onRemoveBackground: (() -> Void)? = nil
     @EnvironmentObject var navigationStateManager: NavigationStateManager
     
     private let imageHelper = ImageHelperFunctions()
@@ -65,6 +68,31 @@ struct ImageCaptureButtonRow: View {
                 
                 Spacer()
                 
+                // Remove background (subject cut-out) – iOS 17+
+                Button {
+                    onRemoveBackground?()
+                } label: {
+                    Group {
+                        if isSegmenting {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .blue))
+                                .scaleEffect(0.8)
+                        } else {
+                            VStack(spacing: 4) {
+                                Image(systemName: "scissors.badge.ellipsis")
+                                    .font(.system(size: 26, weight: .regular))
+                                    .frame(height: 40)
+                                Text("Cut out")
+                                    .font(.caption2)
+                            }
+                        }
+                    }
+                }
+                .disabled(selectedImage == nil || isSegmenting)
+                .foregroundColor(selectedImage == nil || isSegmenting ? .gray : .blue)
+                
+                Spacer()
+                
                 // Background Color Button
                 Button {
                     backgroundColorIndex = (backgroundColorIndex + 1) % 3
@@ -103,14 +131,14 @@ struct ImageCaptureButtonRow: View {
                         Color.white.opacity(0).edgesIgnoringSafeArea(.all)
                             .overlay(
                         TabView(selection: $tabBinding) {
-                            AddSourceView(image: selectedImage)
+                            AddSourceView(image: displayImage ?? selectedImage)
                                 .environmentObject(navigationStateManager)
                                 .tabItem {
                                     Text("Add Source")
                                     Image(systemName: "books.vertical")
                                 }
                                 .tag(0)
-                            AddClippingView(image: selectedImage)
+                            AddClippingView(image: displayImage ?? selectedImage)
                                 .environmentObject(navigationStateManager)
                                 .tabItem {
                                     Text("Add Clipping")
@@ -138,6 +166,7 @@ struct ImageCaptureButtonRow_Previews: PreviewProvider {
     static var previews: some View {
         ImageCaptureButtonRow(
             selectedImage: .constant(nil),
+            displayImage: nil,
             isSourceMenuShowing: .constant(false),
             addDatabaseItemMenu: .constant(false),
             tabBinding: .constant(0),
@@ -148,6 +177,7 @@ struct ImageCaptureButtonRow_Previews: PreviewProvider {
         
         ImageCaptureButtonRow(
             selectedImage: .constant(UIImage(named: "source_thumb")),
+            displayImage: UIImage(named: "source_thumb"),
             isSourceMenuShowing: .constant(false),
             addDatabaseItemMenu: .constant(false),
             tabBinding: .constant(0),

@@ -25,6 +25,7 @@ struct LibrarySourceView: View {
     // Add state for sheet presentation
     @State private var showSwipeSheet: Bool = false
     @State private var swipeStartIndex: Int = 0
+    @State private var sheetPath: [SelectionState] = []
     
     @EnvironmentObject var sourceModel: SourceModel
     @EnvironmentObject var navigationStateManager: NavigationStateManager
@@ -97,8 +98,8 @@ struct LibrarySourceView: View {
         }
         // Sheet presentation for ClippingsSwipeView
         .sheet(isPresented: $showSwipeSheet) {
-            NavigationStack {
-                ClippingsSwipeView(clippings: sortedClippings, currentIndex: $swipeStartIndex)
+            NavigationStack(path: $sheetPath) {
+                ClippingsSwipeView(clippings: sortedClippings, currentIndex: $swipeStartIndex, sheetPath: $sheetPath)
                     .environmentObject(sourceModel)
                     .environmentObject(navigationStateManager)
                     .environment(\.managedObjectContext, managedObjectContext)
@@ -120,6 +121,7 @@ struct LibrarySourceView: View {
                     }
             }
             .presentationSizing(.page)
+            .onDisappear { sheetPath = [] }
         }
     } // View
 }

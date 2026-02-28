@@ -21,9 +21,12 @@ struct ClippingsSwipeView: View {
     
     var clippings: [Clipping]
     @Binding var currentIndex: Int
+    /// When non-nil, Edit pushes onto this path (sheet). Otherwise uses main navigation path.
+    var sheetPath: Binding<[SelectionState]>? = nil
     
     @EnvironmentObject var sourceModel: SourceModel
     @EnvironmentObject var navigationStateManager: NavigationStateManager
+    @Environment(\.dismiss) private var dismiss
 
     @Environment(\.managedObjectContext) var managedObjectContext
     
@@ -196,7 +199,11 @@ struct ClippingsSwipeView: View {
                 source: source,
                 expanded: $expanded,
                 onEdit: {
-                    navigationStateManager.selectionPath.append(.editClippingView(clipping))
+                    if let sheetPath = sheetPath {
+                        sheetPath.wrappedValue.append(.editClippingView(clipping))
+                    } else {
+                        navigationStateManager.selectionPath.append(.editClippingView(clipping))
+                    }
                 },
                 onDelete: {
                     clippingToDelete = clipping
@@ -211,11 +218,10 @@ struct ClippingsSwipeView: View {
                   primaryButton: .destructive(Text("Delete")) {
                 if let clipping = clippingToDelete {
                     sourceModel.deleteClipping(clipping)
-                    // navigate back
-                    navigationStateManager.popBack()
+                    updateClippingTags(clipping: clipping)
+                    updateHeadNameData(clipping: clipping)
+                    dismiss()
                 }
-                updateClippingTags(clipping: clipping)
-                updateHeadNameData(clipping: clipping)
             },
                   secondaryButton: .cancel()
             )

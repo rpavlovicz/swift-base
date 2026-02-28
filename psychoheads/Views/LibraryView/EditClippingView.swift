@@ -65,7 +65,8 @@ struct EditClippingView: View {
     
     @EnvironmentObject var sourceModel: SourceModel
     @EnvironmentObject var navigationStateManager: NavigationStateManager
-    
+    @Environment(\.dismiss) private var dismiss
+
     @Environment(\.managedObjectContext) var managedObjectContext
     
     var body: some View {
@@ -185,7 +186,7 @@ struct EditClippingView: View {
                 sourceModel.updateClipping(editedClipping) { success in
                     if success {
                         sourceModel.updateClippingTagsAndNames(oldName: clipping.name, newName: name, oldTags: clipping.tags, newTags: tags, context: managedObjectContext)
-                        navigationStateManager.popBack()
+                        dismiss()
                     }
                 }
             }
