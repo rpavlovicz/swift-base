@@ -177,6 +177,8 @@ struct CollageView: View {
         dragOffsets.append(.zero)
     }
     
+
+    
     // Calculate proper image size based on clipping dimensions and available space (match ClippingsSwipeView)
     private func calculateImageSize(for clipping: Clipping) -> CGSize {
         let maxWidthFraction: CGFloat = 0.65
@@ -252,26 +254,26 @@ struct CollageView: View {
                         if !clippings.isEmpty {
                             ForEach(Array(clippings.enumerated()), id: \.element.id) { index, clipping in
                                 let imageSize = calculateImageSize(for: clipping)
-                                AsyncImage2(clipping: clipping,
-                                            placeholder: UIImage(),
-                                            imageUrlMid: clipping.imageUrlMid,
-                                            frameHeight: imageSize.height)
-                                    .frame(width: imageSize.width,
-                                           height: imageSize.height)
-                                    .position(x: positions[index].x + dragOffsets[index].width,
-                                             y: positions[index].y + dragOffsets[index].height)
-                                    .zIndex(Double(zIndexOrder().firstIndex(of: index) ?? 0))
-                                    .gesture(
-                                        DragGesture()
-                                            .onChanged { gesture in
-                                                dragOffsets[index] = gesture.translation
-                                            }
-                                            .onEnded { gesture in
-                                                positions[index].x += dragOffsets[index].width
-                                                positions[index].y += dragOffsets[index].height
-                                                dragOffsets[index] = .zero
-                                            }
-                                    )
+                                                            AsyncImage2(clipping: clipping,
+                                        placeholder: UIImage(),
+                                        imageUrlMid: clipping.imageUrlMid,
+                                        frameHeight: imageSize.height)
+                                .frame(width: imageSize.width,
+                                       height: imageSize.height)
+                                .position(x: positions[index].x + dragOffsets[index].width,
+                                         y: positions[index].y + dragOffsets[index].height)
+                                .zIndex(Double(zIndexOrder().firstIndex(of: index) ?? 0))
+                                .gesture(
+                                    DragGesture()
+                                        .onChanged { gesture in
+                                            dragOffsets[index] = gesture.translation
+                                        }
+                                        .onEnded { gesture in
+                                            positions[index].x += dragOffsets[index].width
+                                            positions[index].y += dragOffsets[index].height
+                                            dragOffsets[index] = .zero
+                                        }
+                                )
                             }
                         } else {
                             Text("No clippings loaded")

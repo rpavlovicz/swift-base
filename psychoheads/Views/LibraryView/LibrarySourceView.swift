@@ -27,64 +27,155 @@ struct LibrarySourceView: View {
     @State private var swipeStartIndex: Int = 0
     @State private var sheetPath: [SelectionState] = []
     
+    // Grid vs scattered presentation
+    @State private var isScatterMode: Bool = false
+    @State private var scatterPositions: [CGPoint] = []
+    @State private var scatterDisplaySizes: [CGSize] = []
+    @State private var scatterGeometrySize: CGSize = .zero
+    
+    private let scatterMargin: CGFloat = 16
+    private let cmToPoints: CGFloat = UIDevice.current.userInterfaceIdiom == .pad ? 52.85 : 60.8
+    
     @EnvironmentObject var sourceModel: SourceModel
     @EnvironmentObject var navigationStateManager: NavigationStateManager
     @Environment(\.managedObjectContext) private var managedObjectContext
     
-    var sortedClippings: [Clipping] {
-        return source.clippings.sorted { (clipping1, clipping2) -> Bool in
+    /// All clippings, sorted (heads first, then by size). Used for grid mode.
+    var allSortedClippings: [Clipping] {
+        source.clippings.sorted { clipping1, clipping2 in
             switch (clipping1.isHead, clipping1.isBody, clipping2.isHead, clipping2.isBody) {
-            case (true, _, false, _):
-                return true
-            case (false, _, true, _):
-                return false
-            case (true, false, true, true):
-                return true
-            case (true, true, true, false):
-                return false
-            default:
-                return clipping1.size > clipping2.size
+            case (true, _, false, _): return true
+            case (false, _, true, _): return false
+            case (true, false, true, true): return true
+            case (true, true, true, false): return false
+            default: return clipping1.size > clipping2.size
             }
+        }
+    }
+    
+    /// Head clippings only (isHead and not isBody), sorted by size. Used for scatter mode.
+    var headSortedClippings: [Clipping] {
+        let heads = source.clippings.filter { $0.isHead && !$0.isBody }
+        return heads.sorted { $0.size > $1.size }
+    }
+    
+    /// Clippings to display: all in grid mode, heads only in scatter mode.
+    var displayedClippings: [Clipping] {
+        isScatterMode ? headSortedClippings : allSortedClippings
+    }
+    
+    /// Display size for one clipping in scatter mode: respects aspect ratio, relative scale to others,
+    /// and caps so the largest fits in 1/4 of the view. Never upscales.
+    private func scatterDisplaySize(for clipping: Clipping, viewSize: CGSize) -> CGSize {
+        let naturalW = CGFloat(clipping.width) * cmToPoints
+        let naturalH = CGFloat(clipping.height) * cmToPoints
+        let list = headSortedClippings
+        guard let largest = list.first else { return CGSize(width: naturalW, height: naturalH) }
+        let largestW = CGFloat(largest.width) * cmToPoints
+        let largestH = CGFloat(largest.height) * cmToPoints
+        let largestNaturalArea = largestW * largestH
+        let viewArea = viewSize.width * viewSize.height
+        let maxArea = viewArea / 4
+        let scale: CGFloat
+        if largestNaturalArea <= maxArea {
+            scale = 1.0
+        } else {
+            scale = sqrt(maxArea / largestNaturalArea)
+        }
+        let finalScale = min(scale, 1.0)
+        return CGSize(width: naturalW * finalScale, height: naturalH * finalScale)
+    }
+    
+    /// Generate display sizes and random positions for scatter mode; largest stays within 1/4 of view.
+    private func updateScatterPositions(size: CGSize) {
+        guard size.width > 0, size.height > 0 else { return }
+        let list = headSortedClippings
+        scatterDisplaySizes = list.map { scatterDisplaySize(for: $0, viewSize: size) }
+        scatterPositions = list.indices.map { i in
+            let sz = scatterDisplaySizes[i]
+            let halfW = sz.width / 2
+            let halfH = sz.height / 2
+            let minX = halfW + scatterMargin
+            let maxX = size.width - halfW - scatterMargin
+            let minY = halfH + scatterMargin
+            let maxY = size.height - halfH - scatterMargin
+            let cx: CGFloat
+            let cy: CGFloat
+            if maxX >= minX, maxY >= minY {
+                cx = CGFloat.random(in: minX...maxX)
+                cy = CGFloat.random(in: minY...maxY)
+            } else {
+                cx = size.width / 2
+                cy = size.height / 2
+            }
+            return CGPoint(x: cx, y: cy)
         }
     }
     
     var body: some View {
         VStack {
-            
-//            ScrollView {
-//                LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))]) {
-//                    ForEach(sortedClippings, id: \.id) { clipping in
-//                        
-//                        NavigationLink(value: SelectionState.clippingView(clipping), label: {
-//                            AsyncImage1(clipping: clipping, placeholder: placeholderImage ?? UIImage())
-//                        })
-//                        
-//                    }
-//                }
-//            }
-//            .padding(.horizontal)// ScrollView
-            
-            ScrollView {
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))]) {
-                    ForEach(sortedClippings.indices, id: \.self) { index in
-                        let clipping = sortedClippings[index]
-                        // Replace NavigationLink with Button to trigger sheet
-                        Button(action: {
-                            swipeStartIndex = index
-                            showSwipeSheet = true
-                        }) {
-                            AsyncImage1(clipping: clipping, placeholder: placeholderImage ?? UIImage())
+            if isScatterMode {
+                // Scattered layout: proportional sizes (largest ≤ 1/4 view), aspect ratio preserved, no upscale
+                GeometryReader { geometry in
+                    ZStack {
+                        ForEach(displayedClippings.indices, id: \.self) { index in
+                            let clipping = displayedClippings[index]
+                            let displaySize = scatterDisplaySizes.indices.contains(index)
+                                ? scatterDisplaySizes[index]
+                                : scatterDisplaySize(for: clipping, viewSize: geometry.size)
+                            Button(action: {
+                                swipeStartIndex = index
+                                showSwipeSheet = true
+                            }) {
+                                AsyncImage2(
+                                    clipping: clipping,
+                                    placeholder: placeholderImage ?? UIImage(),
+                                    imageUrlMid: clipping.imageUrlMid,
+                                    frameHeight: displaySize.height
+                                )
+                                .frame(width: displaySize.width, height: displaySize.height)
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            .position(scatterPositions.indices.contains(index) ? scatterPositions[index] : CGPoint(x: geometry.size.width / 2, y: geometry.size.height / 2))
                         }
-                        .buttonStyle(PlainButtonStyle())
+                    }
+                    .frame(width: geometry.size.width, height: geometry.size.height)
+                    .onAppear {
+                        scatterGeometrySize = geometry.size
+                        updateScatterPositions(size: geometry.size)
+                    }
+                    .onChange(of: geometry.size) { _, newSize in
+                        scatterGeometrySize = newSize
+                        updateScatterPositions(size: newSize)
+                    }
+                    .onChange(of: isScatterMode) { _, newValue in
+                        if newValue {
+                            updateScatterPositions(size: scatterGeometrySize)
+                        }
                     }
                 }
-                
+                .clipped()
+            } else {
+                // Default grid layout
+                ScrollView {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))]) {
+                        ForEach(displayedClippings.indices, id: \.self) { index in
+                            let clipping = displayedClippings[index]
+                            Button(action: {
+                                swipeStartIndex = index
+                                showSwipeSheet = true
+                            }) {
+                                AsyncImage1(clipping: clipping, placeholder: placeholderImage ?? UIImage())
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                        }
+                    }
+                }
             }
             
-            Text("total number of clippings = \(source.clippings.count)")
+            Text("total number of clippings = \(displayedClippings.count)")
                 .font(.subheadline)
-            
-        } // Main VStack
+        }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .principal) {
@@ -95,11 +186,19 @@ struct LibrarySourceView: View {
                         .font(.subheadline)
                 }
             }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: { isScatterMode.toggle() }) {
+                    Image(systemName: isScatterMode ? "person.3" : "square.grid.2x2")
+                        .imageScale(.large)
+                        //.contentTransition(.opacity)
+                        .animation(.easeOut(duration: 0.15), value: isScatterMode)
+                }
+            }
         }
         // Sheet presentation for ClippingsSwipeView
         .sheet(isPresented: $showSwipeSheet) {
             NavigationStack(path: $sheetPath) {
-                ClippingsSwipeView(clippings: sortedClippings, currentIndex: $swipeStartIndex, sheetPath: $sheetPath)
+                ClippingsSwipeView(clippings: displayedClippings, currentIndex: $swipeStartIndex, sheetPath: $sheetPath)
                     .environmentObject(sourceModel)
                     .environmentObject(navigationStateManager)
                     .environment(\.managedObjectContext, managedObjectContext)
