@@ -109,7 +109,7 @@ struct SourceRowView2: View {
                         Text(source.dateString)
                             .font(scaledFont(.subheadline))
                         Spacer()
-                        Text("# of clippings: \(source.clippings.count)")
+                        Text("\(source.clippings.count) clippings")
                             .font(scaledFont(.subheadline))
                             .foregroundStyle(Color(.systemGray))
                     }

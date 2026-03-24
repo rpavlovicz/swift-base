@@ -17,6 +17,10 @@ import SwiftUI
 import FirebaseFirestore
 
 struct LibraryView: View {
+    enum SourceSortMode {
+        case alphabetical
+        case dateAdded
+    }
     
     enum Field: Hashable {
         case sourceSearchField
@@ -25,6 +29,7 @@ struct LibraryView: View {
     // why pass this explicitly as an ObservedObject instead if implicitly as an
     //  @EnvironmentObject var sourceModel: SourceModel
     @ObservedObject var sourceModel: SourceModel
+    @EnvironmentObject var navigationStateManager: NavigationStateManager
 
     @AppStorage("isThumbnailMode") private var isThumbnailMode: Bool = false
     
@@ -36,6 +41,7 @@ struct LibraryView: View {
     @State var searchText: String = ""
     @State private var isTagSearchActive: Bool = false
     @FocusState private var focusedField: Field?
+    @State private var sourceSortMode: SourceSortMode = .alphabetical
     
     // Grid layout properties
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
@@ -51,14 +57,23 @@ struct LibraryView: View {
     }
     
     var filteredSources: [Source] {
-        let filtered = sourceModel.sources.filter { source in
+        sourceModel.sources.filter { source in
             searchText.isEmpty || source.title.lowercased().contains(searchText.lowercased())
         }
-        return filtered.sorted {
-            if $0.title != $1.title {
-                return $0.title < $1.title
-            } else {
-                return $0.year < $1.year
+        .sorted { lhs, rhs in
+            switch sourceSortMode {
+            case .alphabetical:
+                if lhs.title != rhs.title {
+                    return lhs.title < rhs.title
+                } else {
+                    return lhs.year < rhs.year
+                }
+            case .dateAdded:
+                if lhs.added != rhs.added {
+                    return lhs.added > rhs.added
+                } else {
+                    return lhs.title < rhs.title
+                }
             }
         }
     }
@@ -200,6 +215,15 @@ struct LibraryView: View {
                                     }
                                 }
                         })
+                        .contextMenu {
+                            Button {
+                                navigationStateManager.selectionPath.append(.sourceView(source))
+                            } label: {
+                                Label("Open Source", systemImage: "arrow.right.circle")
+                            }
+                        } preview: {
+                            SourcePreviewCard(source: source)
+                        }
                     }
                 }
                 .navigationBarTitle("", displayMode: .inline)
@@ -244,8 +268,95 @@ struct LibraryView: View {
             // Update orientation when device rotates
             isLandscape = UIDevice.current.orientation.isLandscape
         }
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: {
+                    sourceSortMode = sourceSortMode == .alphabetical ? .dateAdded : .alphabetical
+                }) {
+                    Image(systemName: sourceSortMode == .alphabetical ? "textformat.abc" : "calendar")
+                }
+                .accessibilityLabel(sourceSortMode == .alphabetical ? "Sorting alphabetically. Tap to sort by date added." : "Sorting by date added. Tap to sort alphabetically.")
+            }
+        }
     }
     
+}
+
+private struct SourcePreviewCard: View {
+    @ObservedObject var source: Source
+    @StateObject private var imageLoader = ImageLoader()
+    @State private var previewImage: UIImage?
+    private let placeholderImage: UIImage = UIImage(named: "source_thumb") ?? UIImage()
+    
+    private var preferredPreviewImagePath: String {
+        if !source.imageUrlMid.isEmpty {
+            return source.imageUrlMid
+        }
+        if !source.imageUrlThumb.isEmpty {
+            return source.imageUrlThumb.replacingOccurrences(of: "_thumb", with: "_mid")
+        }
+        return ""
+    }
+    
+    private var addedDateText: String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        return formatter.string(from: source.added)
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Group {
+                if let image = previewImage ?? source.imageThumb {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+                } else {
+                    Image(uiImage: placeholderImage)
+                        .resizable()
+                        .scaledToFill()
+                }
+            }
+            .frame(height: 300)
+            .frame(maxWidth: .infinity)
+            .clipped()
+            .cornerRadius(12)
+            
+            Text(source.title)
+                .font(.title2)
+                .fontWeight(.semibold)
+                .lineLimit(2)
+            
+            VStack(alignment: .leading, spacing: 6) {
+                if let issue = source.issue, !issue.isEmpty {
+                    Text(issue)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                Text(source.dateString)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                Text("Added: \(addedDateText)")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                Text("\(source.clippings.count) clippings")
+                    .font(.subheadline)
+                    .foregroundColor(.blue)
+            }
+        }
+        .padding(18)
+        .frame(maxWidth: 460)
+        .background(Color(.systemBackground))
+        .onAppear {
+            guard !preferredPreviewImagePath.isEmpty else { return }
+            imageLoader.load(imagePath: preferredPreviewImagePath, useCache: true) { success, downloadedImage in
+                if success, let downloadedImage {
+                    previewImage = downloadedImage
+                }
+            }
+        }
+    }
 }
 
 struct LibraryView_Previews: PreviewProvider {

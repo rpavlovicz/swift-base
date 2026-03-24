@@ -13,18 +13,29 @@ enum DisplayMode {
 }
 
 struct SourceRowView: View {
-    let source: Source
+    @ObservedObject var source: Source
     let displayMode: DisplayMode
+    let placeholderImage: UIImage? = UIImage(named: "source_thumb")
+    @StateObject private var imageLoader = ImageLoader()
     
     var body: some View {
         HStack {
-            if displayMode == .thumbnail, let image = source.imageThumb {
-                Image(uiImage: image)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(width: 60, height: 60)
-                    .clipped()
-                    .cornerRadius(8)
+            if displayMode == .thumbnail {
+                if let image = source.imageThumb {
+                    Image(uiImage: image)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 60, height: 60)
+                        .clipped()
+                        .cornerRadius(8)
+                } else if let placeholderImage {
+                    Image(uiImage: placeholderImage)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 60, height: 60)
+                        .clipped()
+                        .cornerRadius(8)
+                }
             }
             
             VStack(alignment: .leading, spacing: 4) {
@@ -50,6 +61,16 @@ struct SourceRowView: View {
             Spacer()
         }
         .padding(.vertical, 4)
+        .onAppear {
+            guard displayMode == .thumbnail, source.imageThumb == nil else { return }
+            imageLoader.load(imagePath: source.imageUrlThumb, useCache: true) { success, downloadedImage in
+                if success, let downloadedImage {
+                    source.imageThumb = downloadedImage
+                } else {
+                    source.imageThumb = UIImage(named: "broken_image_link")
+                }
+            }
+        }
     }
 }
 

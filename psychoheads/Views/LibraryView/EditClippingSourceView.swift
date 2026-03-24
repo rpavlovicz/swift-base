@@ -26,12 +26,30 @@ struct EditClippingSourceView: View {
     @EnvironmentObject var sourceModel: SourceModel
     @EnvironmentObject var navigationStateManager: NavigationStateManager
     
+    private let sectionSpacing: CGFloat = 10
+    private let clippingPlaceholder = UIImage(named: "clipping_thumb") ?? UIImage()
+    
+    private var filteredAndSortedSources: [Source] {
+        sourceModel.sources
+            .filter { source in
+                guard source.id != clipping.sourceId else { return false }
+                if sourceSearch.isEmpty { return true }
+                return source.title.lowercased().contains(sourceSearch.lowercased())
+            }
+            .sorted { lhs, rhs in
+                if lhs.added != rhs.added {
+                    return lhs.added > rhs.added
+                }
+                return lhs.title < rhs.title
+            }
+    }
+    
     var body: some View {
         ZStack {
             VStack {
                 HStack(alignment: .center) {
                     Spacer()
-                    Image(uiImage: clipping.imageThumb!)
+                    Image(uiImage: clipping.imageThumb ?? clippingPlaceholder)
                         .resizable()
                         .scaledToFit()
                         .frame(width: 150, height: 150)
@@ -45,17 +63,17 @@ struct EditClippingSourceView: View {
                     }
                     Spacer()
                 } // HStack
-                .padding(.bottom, 10)
+                .padding(.bottom, sectionSpacing)
                 
                 
                 VStack {
-                    TextField("New Source", text: $sourceSearch)
+                    TextField("Source Search", text: $sourceSearch)
                         .padding()
                         .background(Color.white)
                         .cornerRadius(10)
                         .foregroundColor(Color.black)
                         .padding(.horizontal, 19)
-                        .padding(.top, 20)
+                        .padding(.top, sectionSpacing)
                         .overlay(
                             Group {
                                 if !sourceSearch.isEmpty {
@@ -74,16 +92,8 @@ struct EditClippingSourceView: View {
                             alignment: .trailing
                         )
                     
-                    let sortedSources = sourceModel.sources.filter({ sourceText in
-                        if sourceSearch == "" {
-                            return sourceText.id != clipping.sourceId
-                        } else {
-                            return sourceText.title.lowercased().contains(sourceSearch.lowercased()) && sourceText.id != clipping.sourceId
-                        }
-                    })
-                    
                     List(selection: $selectedSourceId) {
-                        ForEach(sortedSources, id: \.id) { source in
+                        ForEach(filteredAndSortedSources, id: \.id) { source in
                             SourceRowView(source: source, displayMode: .thumbnail)
                                 .onTapGesture {
                                     if selectedSourceId == source.id     {
@@ -93,12 +103,14 @@ struct EditClippingSourceView: View {
                                     }
                                 }
                         }
-                    }.frame(height: 300)
+                    }
+                    .padding(.top, sectionSpacing)
+                    .frame(height: min(500, UIScreen.main.bounds.height * 0.5))
                     
                 } // search VStack
                 .background(Color(.systemGray6)) // set VStack background
                 
-                Spacer()
+                Spacer(minLength: sectionSpacing)
                 
                 Button("Edit Source") {
                     print("edit button pressed")
@@ -224,11 +236,38 @@ struct acceptClippingSourceEditView: View {
     }
 }
 
-//struct EditClippingSourceView_Previews: PreviewProvider {
-//    static var previews: some View {
-//        EditClippingSourceView(clipping: MockClipping())
-//            .environmentObject(SourceModel())
-//            .environmentObject(NavigationStateManager())
-//    }
-//}
+struct EditClippingSourceView_Previews: PreviewProvider {
+    static var previews: some View {
+        let sourceModel = SourceModel()
+        
+        let currentSource = Source(title: "Current Source", year: "2023", month: "January")
+        currentSource.id = "source_current"
+        currentSource.imageThumb = UIImage(named: "source_thumb")
+        currentSource.added = Date().addingTimeInterval(-86400)
+        
+        let altSource1 = Source(title: "Alt Source One", year: "2022", month: "May")
+        altSource1.id = "source_alt_1"
+        altSource1.imageThumb = UIImage(named: "source_thumb")
+        altSource1.added = Date()
+        
+        let altSource2 = Source(title: "Alt Source Two", year: "2021", month: "September")
+        altSource2.id = "source_alt_2"
+        altSource2.imageThumb = UIImage(named: "source_thumb")
+        altSource2.added = Date().addingTimeInterval(-86400 * 2)
+        
+        let clipping = Clipping()
+        clipping.id = "clip_preview"
+        clipping.sourceId = currentSource.id
+        clipping.imageThumb = UIImage(named: "clipping_thumb")
+        
+        currentSource.clippings = [clipping]
+        sourceModel.sources = [currentSource, altSource1, altSource2]
+        
+        return NavigationStack {
+            EditClippingSourceView(clipping: clipping)
+                .environmentObject(sourceModel)
+                .environmentObject(NavigationStateManager())
+        }
+    }
+}
 

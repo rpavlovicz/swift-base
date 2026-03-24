@@ -214,6 +214,10 @@ struct LibrarySourceView: View {
                                 .environmentObject(sourceModel)
                                 .environmentObject(navigationStateManager)
                                 .environment(\.managedObjectContext, managedObjectContext)
+                        case .editClippingSourceView(let clipping):
+                            EditClippingSourceView(clipping: clipping)
+                                .environmentObject(sourceModel)
+                                .environmentObject(navigationStateManager)
                         default:
                             EmptyView()
                         }
