@@ -105,7 +105,9 @@ struct EditClippingView: View {
                                 isEditNameSheetPresented.toggle()
                             }
                             .sheet(isPresented: $isEditNameSheetPresented) {
-                                EditNameSheetView(clippingName: clipping.name, editName: $name, isPresented: $isEditNameSheetPresented)
+                                EditNameSheetView(clippingName: clipping.name, editName: $name, tags: $tags, isPresented: $isEditNameSheetPresented)
+                                    .environmentObject(sourceModel)
+                                    .environment(\.managedObjectContext, managedObjectContext)
                             }
                             .onChange(of: name) { newName in
                                 updateTags(newName: newName)
@@ -230,10 +232,15 @@ struct EditClippingView: View {
 }
 
 
-//struct EditClippingView_Previews: PreviewProvider {
-//    static var previews: some View {
-//        EditClippingView(clipping: MockHeadClipping())
-//            .environmentObject(SourceModel())
-//            .environmentObject(NavigationStateManager())
-//    }
-//}
+struct EditClippingView_Previews: PreviewProvider {
+    static var previews: some View {
+        let viewContext = PersistenceController(inMemory: true).container.viewContext
+        return NavigationStack {
+            EditClippingView(clipping: MockHeadClipping())
+                .environmentObject(SourceModel())
+                .environmentObject(NavigationStateManager())
+                .environment(\.managedObjectContext, viewContext)
+        }
+        .previewDisplayName("Edit clipping (head)")
+    }
+}

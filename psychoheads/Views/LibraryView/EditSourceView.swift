@@ -126,10 +126,17 @@ struct EditSourceView: View {
     }
 }
 
-//struct EditSourceView_Previews: PreviewProvider {
-//    static var previews: some View {
-//        EditSourceView(source: Source())
-//            .environmentObject(SourceModel())
-//            .environmentObject(NavigationStateManager())
-//    }
-//}
+struct EditSourceView_Previews: PreviewProvider {
+    static var previews: some View {
+        let source = Source(title: "Preview Magazine", year: "1994", month: "June")
+        source.id = "preview-source-1"
+        source.ncopies = 3
+        source.type = "Magazine"
+        return NavigationStack {
+            EditSourceView(source: source)
+                .environmentObject(SourceModel())
+                .environmentObject(NavigationStateManager())
+        }
+        .previewDisplayName("Edit source")
+    }
+}

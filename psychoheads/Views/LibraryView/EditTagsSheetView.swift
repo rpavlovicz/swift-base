@@ -47,14 +47,18 @@ struct EditTagsSheetView: View {
     }
 }
 
-//struct EditTagsSheetView_Previews: PreviewProvider {
-//    static var previews: some View {
-//        
-//        @State var tags = ["one","two","three","four","five","six","seven"]
-//        @State var previewIsPresented = true
-//        
-//        return EditTagsSheetView(tags: $tags, isPresented: $previewIsPresented)
-//    }
-//}
+struct EditTagsSheetView_Previews: PreviewProvider {
+    static var previews: some View {
+        EditTagsSheetViewPreviewHost()
+            .previewDisplayName("Edit tags sheet")
+    }
+}
 
+private struct EditTagsSheetViewPreviewHost: View {
+    @State private var tags = ["one", "two", "three", "four", "five", "six", "seven"]
+    @State private var isPresented = true
 
+    var body: some View {
+        EditTagsSheetView(tags: $tags, isPresented: $isPresented)
+    }
+}
