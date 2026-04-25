@@ -10,6 +10,25 @@ import FirebaseFirestore
 import FirebaseStorage
 import CoreData
 
+enum SourceCoverageFilter: String, CaseIterable, Identifiable {
+    case withClippings
+    case all
+    case unclippedOnly
+    
+    var id: String { rawValue }
+    
+    var displayName: String {
+        switch self {
+        case .withClippings:
+            return "With Clippings"
+        case .all:
+            return "All Sources"
+        case .unclippedOnly:
+            return "Unclipped Only"
+        }
+    }
+}
+
 class SourceModel: ObservableObject {
     
     @Published var clippings: [Clipping] = []
@@ -804,6 +823,46 @@ extension SourceModel {
         DispatchQueue.main.async {
             self.getSources() // Refresh data from Firestore
         }
+    }
+}
+
+extension SourceModel {
+    func sources(for coverageFilter: SourceCoverageFilter) -> [Source] {
+        switch coverageFilter {
+        case .withClippings:
+            return sources.filter { !$0.clippings.isEmpty }
+        case .all:
+            return sources
+        case .unclippedOnly:
+            return sources.filter { $0.clippings.isEmpty }
+        }
+    }
+    
+    var clippedSourcesCount: Int {
+        sources(for: .withClippings).count
+    }
+    
+    var unclippedSourcesCount: Int {
+        sources(for: .unclippedOnly).count
+    }
+    
+    func sourceYears(for coverageFilter: SourceCoverageFilter) -> [Int] {
+        sources(for: coverageFilter).compactMap { Int($0.year) }
+    }
+    
+    func minYear(for coverageFilter: SourceCoverageFilter) -> Int? {
+        sourceYears(for: coverageFilter).min()
+    }
+    
+    func maxYear(for coverageFilter: SourceCoverageFilter) -> Int? {
+        sourceYears(for: coverageFilter).max()
+    }
+    
+    func sourceYearCounts(for coverageFilter: SourceCoverageFilter) -> [(year: Int, count: Int)] {
+        let yearCounts = Dictionary(grouping: sourceYears(for: coverageFilter)) { $0 }
+            .mapValues { $0.count }
+            .sorted { $0.key < $1.key }
+        return yearCounts.map { (year: $0.key, count: $0.value) }
     }
 }
 

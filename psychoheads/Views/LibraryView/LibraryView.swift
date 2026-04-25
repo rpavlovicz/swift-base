@@ -40,8 +40,10 @@ struct LibraryView: View {
     
     @State var searchText: String = ""
     @State private var isTagSearchActive: Bool = false
+    @State private var isSuggestionListDragging: Bool = false
     @FocusState private var focusedField: Field?
-    @State private var sourceSortMode: SourceSortMode = .alphabetical
+    @State private var sourceSortMode: SourceSortMode = .dateAdded
+    @State private var sourceCoverageFilter: SourceCoverageFilter = .withClippings
     
     // Grid layout properties
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
@@ -56,8 +58,26 @@ struct LibraryView: View {
         return isIPad && isLandscape
     }
     
-    var filteredSources: [Source] {
+    var sourceTitleSuggestions: [String] {
+        let uniqueTitles = Array(Set(sourceModel.sources.map { $0.title }.filter { !$0.isEmpty }))
+        let filtered = uniqueTitles.filter { title in
+            searchText.isEmpty || title.lowercased().contains(searchText.lowercased())
+        }
+        return filtered.sorted()
+    }
+    
+    private var titleFilteredSources: [Source] {
         sourceModel.sources.filter { source in
+            searchText.isEmpty || source.title.lowercased().contains(searchText.lowercased())
+        }
+    }
+    
+    private var shouldDisableUnclippedModes: Bool {
+        !titleFilteredSources.contains(where: { $0.clippings.isEmpty })
+    }
+    
+    var filteredSources: [Source] {
+        sourceModel.sources(for: sourceCoverageFilter).filter { source in
             searchText.isEmpty || source.title.lowercased().contains(searchText.lowercased())
         }
         .sorted { lhs, rhs in
@@ -193,6 +213,33 @@ struct LibraryView: View {
                     isTagSearchActive = (newValue == .sourceSearchField)
                 }
             
+            if isTagSearchActive && !sourceTitleSuggestions.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    LazyHStack(spacing: 8) {
+                        ForEach(sourceTitleSuggestions, id: \.self) { title in
+                            TagView2(tag: title) {
+                                guard !isSuggestionListDragging else { return }
+                                searchText = title
+                                focusedField = nil
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(.horizontal)
+                }
+                .frame(maxHeight: 44)
+                .padding(.top, -16)
+                .simultaneousGesture(
+                    DragGesture(minimumDistance: 8)
+                        .onChanged { _ in
+                            isSuggestionListDragging = true
+                        }
+                        .onEnded { _ in
+                            isSuggestionListDragging = false
+                        }
+                )
+            }
+            
             if shouldUseGrid {
                 // Grid layout for iPad landscape
                 gridLayout
@@ -268,7 +315,36 @@ struct LibraryView: View {
             // Update orientation when device rotates
             isLandscape = UIDevice.current.orientation.isLandscape
         }
+        .onChange(of: searchText) { _ in
+            enforceCoverageFilterValidity()
+        }
+        .onReceive(sourceModel.$sources) { _ in
+            enforceCoverageFilterValidity()
+        }
         .toolbar {
+            ToolbarItem(placement: .principal) {
+                Menu {
+                    ForEach(SourceCoverageFilter.allCases) { filter in
+                        Button {
+                            sourceCoverageFilter = filter
+                        } label: {
+                            if sourceCoverageFilter == filter {
+                                Label(filter.displayName, systemImage: "checkmark")
+                            } else {
+                                Text(filter.displayName)
+                            }
+                        }
+                        .disabled(shouldDisableUnclippedModes && filter != .withClippings)
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Text(sourceCoverageFilter.displayName)
+                            .font(.subheadline)
+                        Image(systemName: "chevron.down")
+                            .font(.caption2)
+                    }
+                }
+            }
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: {
                     sourceSortMode = sourceSortMode == .alphabetical ? .dateAdded : .alphabetical
@@ -277,6 +353,12 @@ struct LibraryView: View {
                 }
                 .accessibilityLabel(sourceSortMode == .alphabetical ? "Sorting alphabetically. Tap to sort by date added." : "Sorting by date added. Tap to sort alphabetically.")
             }
+        }
+    }
+    
+    private func enforceCoverageFilterValidity() {
+        if shouldDisableUnclippedModes && sourceCoverageFilter != .withClippings {
+            sourceCoverageFilter = .withClippings
         }
     }
     

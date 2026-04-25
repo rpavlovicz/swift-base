@@ -23,7 +23,10 @@ struct ReportSourceSimpleView: View {
     
     var body: some View {
         
-        VStack(alignment: .leading) {            Text("Total number of sources: \(sourceModel.totalSources)")
+        VStack(alignment: .leading) {
+            Text("Total number of sources: \(sourceModel.totalSources)")
+                .padding(.bottom, 5)
+            Text("Cut sources: \(sourceModel.clippedSourcesCount)")
                 .padding(.bottom, 5)
             Text("Unique source titles: \(sourceModel.uniqueSourceNamesCount)")
                 .font(.subheadline) // Adjusts the font size
